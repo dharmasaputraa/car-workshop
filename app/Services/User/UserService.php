@@ -49,7 +49,9 @@ class UserService
 
     public function getUserById(string $id): User
     {
-        return User::findOrFail($id);
+        return QueryBuilder::for(User::class)
+            ->allowedIncludes('roles')
+            ->findOrFail($id);
     }
 
     public function getUserTrashedById(string $id): User

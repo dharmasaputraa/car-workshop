@@ -60,6 +60,7 @@ class UserController extends Controller
             ->setStatusCode(201);
     }
 
+    #[QueryParameter('include', description: 'Include relations: roles', type: 'string', example: 'roles')]
     /**
      * Get User
      *
