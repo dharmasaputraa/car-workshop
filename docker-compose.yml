@@ -1,0 +1,81 @@
+version: '3.9'
+
+services:
+  pgsql:
+    image: postgres:16-alpine
+    container_name: car_workshop_pgsql
+    restart: unless-stopped
+    ports:
+      - '${FORWARD_DB_PORT:-15432}:5432'
+    environment:
+      POSTGRES_DB: '${DB_DATABASE}'
+      POSTGRES_USER: '${DB_USERNAME}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+    networks:
+      - laravel
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: car_workshop_redis
+    restart: unless-stopped
+    ports:
+      - '${FORWARD_REDIS_PORT:-16379}:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - laravel
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: car_workshop_rustfs
+    restart: unless-stopped
+    ports:
+      - '${FORWARD_RUSTFS_PORT:-19000}:9000'
+      - '${FORWARD_RUSTFS_CONSOLE_PORT:-19001}:9001'
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: '0.0.0.0:9000'
+      RUSTFS_CONSOLE_ADDRESS: '0.0.0.0:9001'
+      RUSTFS_CONSOLE_ENABLE: 'true'
+      RUSTFS_ACCESS_KEY: '${AWS_ACCESS_KEY_ID}'
+      RUSTFS_SECRET_KEY: '${AWS_SECRET_ACCESS_KEY}'
+    volumes:
+      - rustfs_data:/data
+    networks:
+      - laravel
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:9000']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: car_workshop_mailpit
+    restart: unless-stopped
+    ports:
+      - '${FORWARD_MAILPIT_PORT:-11025}:1025'
+      - '${FORWARD_MAILPIT_DASHBOARD_PORT:-18025}:8025'
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  pgsql_data:
+  redis_data:
+  rustfs_data:

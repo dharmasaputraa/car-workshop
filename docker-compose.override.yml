@@ -1,0 +1,49 @@
+services:
+  horizon:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: car_workshop_horizon
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: php artisan horizon
+    environment:
+      APP_ENV: local
+      DB_HOST: pgsql
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: null
+      REDIS_CLIENT: phpredis
+      QUEUE_CONNECTION: redis
+      FILESYSTEM_DISK: s3
+      AWS_ENDPOINT: http://rustfs:9000
+    depends_on:
+      redis:
+        condition: service_healthy
+      pgsql:
+        condition: service_healthy
+    networks:
+      - laravel
+
+  pail:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: car_workshop_pail
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    command: php artisan pail --timeout=0 --verbose
+    environment:
+      APP_ENV: local
+      DB_HOST: pgsql
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+    depends_on:
+      redis:
+        condition: service_healthy
+      pgsql:
+        condition: service_healthy
+    networks:
+      - laravel
