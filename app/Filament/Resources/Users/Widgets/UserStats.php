@@ -28,7 +28,7 @@ class UserStats extends StatsOverviewWidget
 
         // Filter by Spatie Role
         $totalMembers = (clone $query)
-            ->whereHas('roles', fn($q) => $q->where('name', RoleType::MEMBER->value))
+            ->whereHas('roles', fn($q) => $q->where('name', RoleType::CUSTOMER->value))
             ->count();
 
         return [

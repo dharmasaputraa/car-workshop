@@ -55,6 +55,6 @@ class RoleSeeder extends Seeder
             ]
         );
 
-        $user->assignRole(RoleType::MEMBER->value);
+        $user->assignRole(RoleType::CUSTOMER->value);
     }
 }

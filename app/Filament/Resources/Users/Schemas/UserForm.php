@@ -113,9 +113,9 @@ class UserForm
                                                             ])
                                                     )
                                                     ->native(false)
-                                                    ->default(RoleType::MEMBER->value)
+                                                    ->default(RoleType::CUSTOMER->value)
                                                     ->required()
-                                                    ->helperText('Default role is Member'),
+                                                    ->helperText('Default role is Customer'),
 
                                                 Toggle::make('is_active')
                                                     ->label('Active')

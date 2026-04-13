@@ -19,8 +19,9 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia
+class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia, JWTSubject
 {
     use HasFactory,
         Notifiable,
@@ -145,9 +146,9 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia
         return $this->hasRole(RoleType::ADMIN->value);
     }
 
-    public function isMember(): bool
+    public function isCustomer(): bool
     {
-        return $this->hasRole(RoleType::MEMBER->value);
+        return $this->hasRole(RoleType::CUSTOMER->value);
     }
 
     public function getRoleNameAttribute(): ?string
