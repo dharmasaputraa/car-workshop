@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Resources\Api\V1\ErrorResource;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -43,65 +44,49 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if ($request->is('api/*') || $request->expectsJson()) {
 
-                /* 1. Handle Validation Exception (422) */
                 if ($e instanceof ValidationException) {
-                    $errors = [];
-                    foreach ($e->errors() as $field => $messages) {
-                        foreach ($messages as $message) {
-                            $errors[] = [
-                                'status' => (string) Response::HTTP_UNPROCESSABLE_ENTITY,
-                                'title' => 'Validation Error',
-                                'detail' => $message,
-                                'source' => ['pointer' => "/data/attributes/{$field}"],
-                            ];
-                        }
-                    }
-                    return response()->json(['errors' => $errors], Response::HTTP_UNPROCESSABLE_ENTITY);
+                    return ErrorResource::validation($e->errors());
                 }
 
-                /* 2. Handle Not Found (404) */
-                if ($e instanceof NotFoundHttpException || $e instanceof ModelNotFoundException) {
-                    return response()->json([
-                        'errors' => [
-                            [
-                                'status' => (string) Response::HTTP_NOT_FOUND,
-                                'title' => 'Not Found',
-                                'detail' => 'The resource you requested was not found.'
-                            ]
-                        ]
-                    ], Response::HTTP_NOT_FOUND);
+                if ($e instanceof ModelNotFoundException || $e instanceof NotFoundHttpException) {
+                    return ErrorResource::make(
+                        'Not Found',
+                        'The resource you requested was not found.',
+                        Response::HTTP_NOT_FOUND,
+                        'NOT_FOUND'
+                    );
                 }
 
-                /* 3. Handle Unauthorized (401) */
                 if ($e instanceof AuthenticationException) {
-                    return response()->json([
-                        'errors' => [
-                            [
-                                'status' => (string) Response::HTTP_UNAUTHORIZED,
-                                'title' => 'Unauthenticated',
-                                'detail' => 'Anda harus login untuk mengakses resource ini.'
-                            ]
-                        ]
-                    ], Response::HTTP_UNAUTHORIZED);
+                    return ErrorResource::make(
+                        'Unauthenticated',
+                        'You must be logged in to access this resource.',
+                        Response::HTTP_UNAUTHORIZED,
+                        'UNAUTHENTICATED'
+                    );
                 }
 
-                /* 4. Handle General Server Error / Custom HTTP Exception */
-                // CARA BARU YANG AMAN:
-                // Cek apakah error ini implement HttpExceptionInterface milik Symfony
+                // Tambahan: handle Gate::authorize() yang lempar 403
+                if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException) {
+                    return ErrorResource::make(
+                        'Forbidden',
+                        'You do not have permission to perform this action.',
+                        Response::HTTP_FORBIDDEN,
+                        'FORBIDDEN'
+                    );
+                }
+
                 $statusCode = $e instanceof HttpExceptionInterface
                     ? $e->getStatusCode()
                     : Response::HTTP_INTERNAL_SERVER_ERROR;
 
-                return response()->json([
-                    'errors' => [
-                        [
-                            'status' => (string) $statusCode,
-                            'title' => $statusCode === 500 ? 'Internal Server Error' : 'Error',
-                            // Hanya tampilkan detail error asli jika APP_DEBUG=true (demi keamanan)
-                            'detail' => config('app.debug') ? $e->getMessage() : 'An error occurred on the server.'
-                        ]
-                    ]
-                ], $statusCode);
+                return ErrorResource::make(
+                    $statusCode === 500 ? 'Internal Server Error' : 'Error',
+                    config('app.debug') ? $e->getMessage() : 'An error occurred on the server.',
+                    $statusCode,
+                    null,
+                    $e
+                );
             }
         });
     })->create();

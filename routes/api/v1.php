@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\RoleType;
 use App\Http\Controllers\Api\V1\User\UserController;
+use App\Http\Controllers\Api\V1\HealthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,13 +11,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Route::prefix('health')->name('health.')->group(function () {
-//     Route::get('/basic', [HealthController::class, 'basic'])->name('basic');
-
-//     Route::middleware(['auth:api', 'verified', 'active', 'role:' . RoleType::SUPER_ADMIN->value]) // Nanti Ganti dengan permission: view-full-health
-//         ->get('/full', [HealthController::class, 'full'])
-//         ->name('full');
-// });
+Route::prefix('health')->name('health.')->group(function () {
+    Route::get('/basic', [HealthController::class, 'basic'])->name('basic');
+    Route::get('/full', [HealthController::class, 'full'])->name('full');
+});
 
 
 /*
@@ -24,14 +23,26 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('users')->name('users.')->group(function () {
-    Route::get('/trashed', [UserController::class, 'trashed'])->name('trashed');
-    Route::post('/{id}/restore', [UserController::class, 'restore'])->name('restore');
-    Route::patch('/{id}/toggle-active', [UserController::class, 'toggleActive'])->name('toggle-active');
-    Route::patch('/{id}/role', [UserController::class, 'changeRole'])->name('change-role');
-});
+Route::middleware([])
+    ->prefix('users')
+    ->name('users.')
+    ->group(function () {
 
-Route::apiResource('users', UserController::class)->names('users');
+        Route::get('/trashed', [UserController::class, 'trashed'])->name('trashed');
+        Route::post('/{id}/restore', [UserController::class, 'restore'])->name('restore');
+        Route::patch('/{id}/toggle-active', [UserController::class, 'toggleActive'])->name('toggle-active');
+        Route::patch('/{id}/role', [UserController::class, 'changeRole'])->name('change-role');
+
+        Route::apiResource('/', UserController::class)
+            ->parameters(['' => 'id'])
+            ->names([
+                'index'   => 'index',
+                'store'   => 'store',
+                'show'    => 'show',
+                'update'  => 'update',
+                'destroy' => 'destroy',
+            ]);
+    });
 
 
 /*
