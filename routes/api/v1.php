@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\RoleType;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\User\UserController;
 use App\Http\Controllers\Api\V1\HealthController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,42 @@ Route::prefix('health')->name('health.')->group(function () {
     Route::get('/full', [HealthController::class, 'full'])->name('full');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Auth
+|--------------------------------------------------------------------------
+*/
+Route::prefix('auth')->name('auth.')->group(function () {
+
+    $strictThrottle = app()->isLocal() ? 'throttle:100,1' : 'throttle:3,1';
+    $loginThrottle  = app()->isLocal() ? 'throttle:100,1' : 'throttle:30,1';
+
+    // Public (strict)
+    Route::middleware($strictThrottle)->group(function () {
+        Route::post('/register', [AuthController::class, 'register'])->name('register');
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.forgot');
+        Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+    });
+
+    // Login (custom throttle)
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware($loginThrottle)
+        ->name('login');
+
+    // Authenticated
+    Route::middleware(['auth:api', 'active'])->group(function () {
+        Route::post('/refresh', [AuthController::class, 'refresh'])->name('token.refresh');
+        Route::post('/revoke', [AuthController::class, 'revokeToken'])->name('token.revoke');
+
+        Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+            ->name('email.verification.resend');
+    });
+
+    // Email verification (signed URL)
+    Route::middleware('signed')
+        ->get('/verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->name('email.verification.verify');
+});
 
 /*
 |--------------------------------------------------------------------------

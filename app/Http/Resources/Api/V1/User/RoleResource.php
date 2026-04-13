@@ -22,8 +22,8 @@ class RoleResource extends JsonApiResource
         return [
             'name'       => $this->resource->name,
             'guard_name' => $this->resource->guard_name,
-            'created_at' => $this->resource->created_at,
-            'updated_at' => $this->resource->updated_at,
+            'created_at' => $this->resource->created_at?->toIso8601String(),
+            'updated_at' => $this->resource->updated_at?->toIso8601String(),
         ];
     }
 }
