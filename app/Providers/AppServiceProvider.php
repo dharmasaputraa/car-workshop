@@ -12,6 +12,7 @@ use App\Auth\LoginResponse as CustomLoginResponse;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,28 +30,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Scramble::configure()
-            ->withDocumentTransformers(function (OpenApi $openApi) {
-                $openApi->secure(
-                    SecurityScheme::http('bearer', 'JWT')
-                );
-            });
-
-        Gate::before(function ($user, $ability) {
-            return $user->isSuperAdmin() ? true : null;
-        });
+        $this->configureDefaults();
+        $this->configureScramble();
+        $this->configureGates();
     }
 
     /**
      * Configure default behaviors for production-ready applications.
      */
-    protected function configureDefaults(): void
+    private function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
 
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
+        DB::prohibitDestructiveCommands(app()->isProduction());
 
         Password::defaults(
             fn(): ?Password => app()->isProduction()
@@ -60,7 +52,25 @@ class AppServiceProvider extends ServiceProvider
                 ->numbers()
                 ->symbols()
                 ->uncompromised()
-                : null,
+                : null
         );
+    }
+
+    private function configureScramble(): void
+    {
+        Scramble::configure()
+            ->withDocumentTransformers(function (OpenApi $openApi) {
+                $openApi->secure(
+                    SecurityScheme::http('bearer', 'JWT')
+                );
+            });
+    }
+
+    private function configureGates(): void
+    {
+        // Super admin bypass semua policy, kecuali policy yang explicitly return false
+        Gate::before(function ($user, $ability) {
+            return $user->isSuperAdmin() ? true : null;
+        });
     }
 }

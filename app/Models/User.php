@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RoleType;
+use App\Notifications\CustomResetPasswordNotification;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
@@ -187,11 +188,11 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
     }
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | MEDIA COLLECTIONS
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | JWT
+    |--------------------------------------------------------------------------
+    */
 
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
@@ -211,5 +212,32 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notification
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new CustomResetPasswordNotification($token));
+    }
+
+    /**
+     * Send the email verification notification.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new \App\Notifications\VerifyEmailNotification());
     }
 }

@@ -1,13 +1,20 @@
 <?php
 
-namespace App\Http\Resources\Api\V1\User;
+namespace App\Http\Resources\Api\V1\Auth;
 
-use App\Http\Resources\Api\V1\User\RoleResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
-class UserResource extends JsonApiResource
+class UserAuthResource extends JsonApiResource
 {
+    public function __construct(
+        mixed $resource,
+        protected readonly array $tokenData = [],
+        protected readonly bool $isNew = false,
+    ) {
+        parent::__construct($resource);
+    }
+
     public function toId(Request $request): string
     {
         return (string) $this->resource->getKey();
@@ -28,7 +35,6 @@ class UserResource extends JsonApiResource
             'email_verified_at' => $this->resource->email_verified_at?->toIso8601String(),
             'created_at'        => $this->resource->created_at?->toIso8601String(),
             'updated_at'        => $this->resource->updated_at?->toIso8601String(),
-            'deleted_at'        => $this->whenNotNull($this->resource->deleted_at?->toIso8601String()),
         ];
     }
 
@@ -36,16 +42,25 @@ class UserResource extends JsonApiResource
     {
         return [
             'roles' => fn() => $this->whenLoaded('roles'),
-
-            // Contoh: Relasi 'logs' hanya muncul jika user adalah Super Admin
-            // 'logs' => fn () => $this->resource->isSuperAdmin() ? $this->whenLoaded('logs') : null,
         ];
     }
 
     public function toMeta(Request $request): array
     {
-        return [
+        return array_filter([
             'is_super_admin' => $this->resource->isSuperAdmin(),
-        ];
+        ], fn($v) => $v !== null);
+    }
+
+    public function with($request): array
+    {
+        $meta = array_filter([
+            'is_new' => $this->isNew ?: null,
+            'token'  => $this->tokenData ?: null,
+        ]);
+
+        return array_filter([
+            'meta' => $meta ?: null,
+        ]);
     }
 }

@@ -11,11 +11,11 @@ services:
     environment:
       APP_ENV: local
       DB_HOST: pgsql
+      DB_PORT: 5432
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: null
-      REDIS_CLIENT: phpredis
       QUEUE_CONNECTION: redis
+      MAIL_PORT: 1025
       FILESYSTEM_DISK: s3
       AWS_ENDPOINT: http://rustfs:9000
     depends_on:
@@ -38,8 +38,11 @@ services:
     environment:
       APP_ENV: local
       DB_HOST: pgsql
+      DB_PORT: 5432
       REDIS_HOST: redis
+      REDIS_PORT: 6379
       QUEUE_CONNECTION: redis
+      MAIL_PORT: 1025
     depends_on:
       redis:
         condition: service_healthy

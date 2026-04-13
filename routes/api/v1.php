@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\RoleType;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\User\UserController;
+use App\Http\Controllers\Api\V1\HealthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,14 +12,47 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Route::prefix('health')->name('health.')->group(function () {
-//     Route::get('/basic', [HealthController::class, 'basic'])->name('basic');
+Route::prefix('health')->name('health.')->group(function () {
+    Route::get('/basic', [HealthController::class, 'basic'])->name('basic');
+    Route::get('/full', [HealthController::class, 'full'])->name('full');
+});
 
-//     Route::middleware(['auth:api', 'verified', 'active', 'role:' . RoleType::SUPER_ADMIN->value]) // Nanti Ganti dengan permission: view-full-health
-//         ->get('/full', [HealthController::class, 'full'])
-//         ->name('full');
-// });
+/*
+|--------------------------------------------------------------------------
+| Auth
+|--------------------------------------------------------------------------
+*/
+Route::prefix('auth')->name('auth.')->group(function () {
 
+    $strictThrottle = app()->isLocal() ? 'throttle:100,1' : 'throttle:3,1';
+    $loginThrottle  = app()->isLocal() ? 'throttle:100,1' : 'throttle:30,1';
+
+    // Public (strict)
+    Route::middleware($strictThrottle)->group(function () {
+        Route::post('/register', [AuthController::class, 'register'])->name('register');
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.forgot');
+        Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
+    });
+
+    // Login (custom throttle)
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware($loginThrottle)
+        ->name('login');
+
+    // Authenticated
+    Route::middleware(['auth:api', 'active'])->group(function () {
+        Route::post('/refresh', [AuthController::class, 'refresh'])->name('token.refresh');
+        Route::post('/revoke', [AuthController::class, 'revokeToken'])->name('token.revoke');
+
+        Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+            ->name('email.verification.resend');
+    });
+
+    // Email verification (signed URL)
+    Route::middleware('signed')
+        ->get('/verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->name('email.verification.verify');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -24,14 +60,26 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('users')->name('users.')->group(function () {
-    Route::get('/trashed', [UserController::class, 'trashed'])->name('trashed');
-    Route::post('/{id}/restore', [UserController::class, 'restore'])->name('restore');
-    Route::patch('/{id}/toggle-active', [UserController::class, 'toggleActive'])->name('toggle-active');
-    Route::patch('/{id}/role', [UserController::class, 'changeRole'])->name('change-role');
-});
+Route::middleware([])
+    ->prefix('users')
+    ->name('users.')
+    ->group(function () {
 
-Route::apiResource('users', UserController::class)->names('users');
+        Route::get('/trashed', [UserController::class, 'trashed'])->name('trashed');
+        Route::post('/{id}/restore', [UserController::class, 'restore'])->name('restore');
+        Route::patch('/{id}/toggle-active', [UserController::class, 'toggleActive'])->name('toggle-active');
+        Route::patch('/{id}/role', [UserController::class, 'changeRole'])->name('change-role');
+
+        Route::apiResource('/', UserController::class)
+            ->parameters(['' => 'id'])
+            ->names([
+                'index'   => 'index',
+                'store'   => 'store',
+                'show'    => 'show',
+                'update'  => 'update',
+                'destroy' => 'destroy',
+            ]);
+    });
 
 
 /*
