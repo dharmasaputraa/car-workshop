@@ -44,6 +44,11 @@ class RoleSeeder extends Seeder
                 'role'  => RoleType::ADMIN->value,
             ],
             [
+                'email' => 'mechanic@example.com',
+                'name'  => 'Mechanic',
+                'role'  => RoleType::MECHANIC->value,
+            ],
+            [
                 'email' => 'user@example.com',
                 'name'  => 'User',
                 'role'  => RoleType::CUSTOMER->value,
