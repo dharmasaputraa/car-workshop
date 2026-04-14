@@ -22,7 +22,6 @@ readonly class MechanicAssignmentData
         return new self(
             work_order_service_id: $request->validated('work_order_service_id'),
             mechanic_id: $request->validated('mechanic_id'),
-            // Default status ke PENDING jika baru di-assign
             status: $request->has('status')
                 ? MechanicAssignmentStatus::tryFrom($request->validated('status'))
                 : MechanicAssignmentStatus::ASSIGNED,

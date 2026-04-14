@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ShieldSeeder::class,
             RoleSeeder::class,
             CustomerCarSeeder::class,
+            ServiceSeeder::class,
         ]);
     }
 }

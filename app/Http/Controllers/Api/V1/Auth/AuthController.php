@@ -112,6 +112,16 @@ class AuthController extends Controller
     }
 
     /**
+     * Revoke Token (Alias for logout)
+     *
+     * Revoke the current JWT token.
+     */
+    public function revokeToken(): JsonResponse
+    {
+        return $this->logout();
+    }
+
+    /**
      * Me
      *
      * Return the currently authenticated user.

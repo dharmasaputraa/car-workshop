@@ -14,7 +14,6 @@ class AssignMechanicRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Pastikan ID yang dikirim benar-benar milik user dengan role mechanic
             'mechanic_id' => ['required', 'string', 'uuid', 'exists:users,id'],
         ];
     }

@@ -8,7 +8,7 @@ use App\Http\Requests\Api\V1\Mechanic\StoreMechanicAssignmentRequest;
 use App\Http\Requests\Api\V1\Mechanic\UpdateMechanicAssignmentRequest;
 use App\Http\Resources\Api\V1\Mechanic\MechanicAssignmentResource;
 use App\Models\MechanicAssignment;
-use App\Repositories\Contracts\MechanicAssignmentRepositoryInterface;
+use App\Services\MechanicAssignment\MechanicAssignmentService;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +20,7 @@ use Knuckles\Scribe\Attributes\UrlParam;
 class MechanicAssignmentController extends Controller
 {
     public function __construct(
-        private readonly MechanicAssignmentRepositoryInterface $assignmentRepository
+        private readonly MechanicAssignmentService $assignmentService
     ) {}
 
     /**
@@ -32,7 +32,7 @@ class MechanicAssignmentController extends Controller
     #[QueryParameter('filter[mechanic_id]', description: 'Filter by mechanic UUID', type: 'string', example: 'uuid-here')]
     #[QueryParameter('filter[work_order_service_id]', description: 'Filter by specific work order service UUID', type: 'string', example: 'uuid-here')]
     #[QueryParameter('sort', description: 'Sort by field. Options: assigned_at, completed_at, created_at', type: 'string', example: '-assigned_at')]
-    #[QueryParameter('include', description: 'Include relations: mechanic, workOrderService', type: 'string', example: 'mechanic')]
+    #[QueryParameter('include', description: 'Include relations: mechanic, workOrderService, workOrderService.service', type: 'string', example: 'mechanic')]
     #[QueryParameter('per_page', description: 'Number of results per page', type: 'integer', example: 15)]
     #[QueryParameter('page', description: 'Page number', type: 'integer', example: 1)]
     public function index(): AnonymousResourceCollection
@@ -40,7 +40,7 @@ class MechanicAssignmentController extends Controller
         Gate::authorize('viewAny', MechanicAssignment::class);
 
         return MechanicAssignmentResource::collection(
-            $this->assignmentRepository->getPaginatedAssignments()
+            $this->assignmentService->getPaginatedAssignments()
         );
     }
 
@@ -49,10 +49,10 @@ class MechanicAssignmentController extends Controller
      *
      * Retrieve details of a specific assignment.
      */
-    #[QueryParameter('include', description: 'Include relations: mechanic, workOrderService', type: 'string', example: 'mechanic,workOrderService')]
+    #[QueryParameter('include', description: 'Include relations: mechanic, workOrderService, workOrderService.service', type: 'string', example: 'mechanic,workOrderService')]
     public function show(string $id): MechanicAssignmentResource
     {
-        $assignment = $this->assignmentRepository->findById($id);
+        $assignment = $this->assignmentService->getAssignmentById($id);
         Gate::authorize('view', $assignment);
 
         return new MechanicAssignmentResource($assignment);
@@ -61,7 +61,7 @@ class MechanicAssignmentController extends Controller
     /**
      * Create Mechanic Assignment
      *
-     * Directly assign a mechanic to a work order service item.
+     * Assign a mechanic to a work order service item.
      */
     public function store(StoreMechanicAssignmentRequest $request): MechanicAssignmentResource
     {
@@ -70,8 +70,7 @@ class MechanicAssignmentController extends Controller
         // Transform validated request to DTO
         $dto = MechanicAssignmentData::fromRequest($request);
 
-        // Create via repository (Nantinya logic ini idealnya dibungkus di MechanicService)
-        $assignment = $this->assignmentRepository->create($dto->toArray());
+        $assignment = $this->assignmentService->createAssignment($dto);
 
         return new MechanicAssignmentResource($assignment);
     }
@@ -83,10 +82,10 @@ class MechanicAssignmentController extends Controller
      */
     public function update(UpdateMechanicAssignmentRequest $request, string $id): MechanicAssignmentResource
     {
-        $assignment = $this->assignmentRepository->findById($id);
+        $assignment = $this->assignmentService->getAssignmentById($id);
         Gate::authorize('update', $assignment);
 
-        $assignment = $this->assignmentRepository->update($assignment, $request->validated());
+        $assignment = $this->assignmentService->updateAssignment($assignment, $request->validated());
 
         return new MechanicAssignmentResource($assignment);
     }
@@ -98,11 +97,30 @@ class MechanicAssignmentController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $assignment = $this->assignmentRepository->findById($id);
+        $assignment = $this->assignmentService->getAssignmentById($id);
         Gate::authorize('delete', $assignment);
 
-        $this->assignmentRepository->delete($assignment);
+        $this->assignmentService->deleteAssignment($assignment);
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Cancel Mechanic Assignment
+     *
+     * Cancel a mechanic assignment (changes status to CANCELED).
+     * Cannot cancel if in progress or completed.
+     */
+    public function cancel(string $id): JsonResponse
+    {
+        $assignment = $this->assignmentService->getAssignmentById($id);
+
+        Gate::authorize('delete', $assignment);
+
+        $canceledAssignment = $this->assignmentService->cancelAssignment($id);
+
+        return (new MechanicAssignmentResource($canceledAssignment))
+            ->response()
+            ->setStatusCode(200);
     }
 }

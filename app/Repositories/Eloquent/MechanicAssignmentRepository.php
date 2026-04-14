@@ -21,7 +21,7 @@ class MechanicAssignmentRepository implements MechanicAssignmentRepositoryInterf
                 AllowedFilter::exact('work_order_service_id'),
             )
             ->allowedSorts('assigned_at', 'completed_at', 'created_at')
-            ->allowedIncludes('mechanic', 'workOrderService')
+            ->allowedIncludes('mechanic', 'workOrderService', 'workOrderService.service')
             ->defaultSort('-assigned_at')
             ->paginate(request()->integer('per_page', self::PER_PAGE))
             ->appends(request()->query());
@@ -30,7 +30,7 @@ class MechanicAssignmentRepository implements MechanicAssignmentRepositoryInterf
     public function findById(string $id): MechanicAssignment
     {
         return QueryBuilder::for(MechanicAssignment::class)
-            ->allowedIncludes('mechanic', 'workOrderService')
+            ->allowedIncludes('mechanic', 'workOrderService', 'workOrderService.service')
             ->findOrFail($id);
     }
 

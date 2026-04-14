@@ -33,6 +33,9 @@ enum ServiceItemStatus: string implements HasColor, HasLabel
      */
     case COMPLETED = 'completed';
 
+
+    case COMPLAINED = 'complained';
+
     /**
      * The service was removed or canceled from the work order.
      */
@@ -45,6 +48,7 @@ enum ServiceItemStatus: string implements HasColor, HasLabel
             self::ASSIGNED => 'Assigned',
             self::IN_PROGRESS => 'In Progress',
             self::COMPLETED => 'Completed',
+            self::COMPLAINED => 'Complained',
             self::CANCELED => 'Canceled',
         };
     }
@@ -56,6 +60,7 @@ enum ServiceItemStatus: string implements HasColor, HasLabel
             self::ASSIGNED => 'warning',
             self::IN_PROGRESS => 'primary',
             self::COMPLETED => 'success',
+            self::COMPLAINED => 'danger',
             self::CANCELED => 'danger',
         };
     }

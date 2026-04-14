@@ -38,7 +38,7 @@ class CarService
         // Validate format
         if (!preg_match(self::PLATE_NUMBER_REGEX, $normalized)) {
             throw new \InvalidArgumentException(
-                'Format plat nomor tidak valid. Format yang benar: [Kode Wilayah][Spasi][Angka 1–4 digit][Spasi][Huruf 1–3]. Contoh: B 1234 ABC'
+                'Invalid license plate format. Correct format: [Area Code][Space][Number 1–4 digits][Space][Letters 1–3]. Example: B 1234 ABC'
             );
         }
 

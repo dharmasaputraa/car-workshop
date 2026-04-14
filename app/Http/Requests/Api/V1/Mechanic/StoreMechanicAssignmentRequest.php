@@ -15,7 +15,6 @@ class StoreMechanicAssignmentRequest extends FormRequest
     {
         return [
             'work_order_service_id' => ['required', 'uuid', 'exists:work_order_services,id'],
-            // Pastikan user yang di-assign benar-benar ada
             'mechanic_id'           => ['required', 'uuid', 'exists:users,id'],
         ];
     }

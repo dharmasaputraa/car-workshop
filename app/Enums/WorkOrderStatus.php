@@ -7,9 +7,11 @@ use Filament\Support\Contracts\HasLabel;
 
 /**
  * Defines the lifecycle states of a Work Order.
- * * Typical Flow:
- * DRAFT -> DIAGNOSED -> APPROVED -> IN_PROGRESS -> COMPLETED -> CLOSED
- * * Alternative Flows:
+ *
+ * Typical Flow:
+ * DRAFT -> DIAGNOSED -> APPROVED -> IN_PROGRESS -> COMPLETED -> INVOICED -> CLOSED
+ *
+ * Alternative Flows:
  * - APPROVED -> PENDING (e.g., waiting for spare parts or mechanic schedule).
  * - COMPLETED -> COMPLAINED (Customer raised an issue) -> IN_PROGRESS (Rework).
  * - DRAFT/DIAGNOSED -> CANCELED (Aborted before execution).
@@ -52,6 +54,12 @@ enum WorkOrderStatus: string implements HasColor, HasLabel
     case COMPLETED = 'completed';
 
     /**
+     * Customer is satisfied and invoice has been generated.
+     * Waiting for payment.
+     */
+    case INVOICED = 'invoiced';
+
+    /**
      * Customer reported an issue after the work was marked as completed.
      * Requires re-evaluation or rework by the mechanic.
      */
@@ -78,6 +86,7 @@ enum WorkOrderStatus: string implements HasColor, HasLabel
             self::PENDING => 'Pending',
             self::IN_PROGRESS => 'In Progress',
             self::COMPLETED => 'Completed',
+            self::INVOICED => 'Invoiced',
             self::COMPLAINED => 'Complained',
             self::CLOSED => 'Closed',
             self::CANCELED => 'Canceled',
@@ -91,10 +100,11 @@ enum WorkOrderStatus: string implements HasColor, HasLabel
             self::DIAGNOSED => 'info',
             self::APPROVED => 'primary',
             self::IN_PROGRESS => 'warning',
-            self::PENDING => 'warning', // Note: Usually pending is warning (waiting), and in_progress is primary/info. Adjusted based on your code.
+            self::PENDING => 'warning',
             self::COMPLETED => 'success',
+            self::INVOICED => 'primary',
             self::COMPLAINED => 'danger',
-            self::CLOSED => 'success', // Changed from secondary to success/gray usually for closed, but kept your original structure below
+            self::CLOSED => 'success',
             self::CANCELED => 'danger',
         };
     }
