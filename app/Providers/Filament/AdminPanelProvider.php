@@ -111,6 +111,7 @@ class AdminPanelProvider extends PanelProvider
                     ->users([
                         'Super Admin' => 'superadmin@example.com',
                         'Admin' => 'admin@example.com',
+                        'Mechanic' => 'mechanic@example.com',
                         'User' => 'user@example.com',
                     ])
             ]);

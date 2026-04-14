@@ -36,7 +36,7 @@ class ShieldSeeder extends Seeder
                 "permissions": [
                     "view_any_user", "view_user", "create_user", "update_user", "delete_user", "force_delete_user"
                 ]
-            }
+            },
             {
                 "name": "customer",
                 "guard_name": "api",
