@@ -147,6 +147,11 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
         return $this->hasRole(RoleType::ADMIN->value);
     }
 
+    public function isMechanic(): bool
+    {
+        return $this->hasRole(RoleType::MECHANIC->value);
+    }
+
     public function isCustomer(): bool
     {
         return $this->hasRole(RoleType::CUSTOMER->value);

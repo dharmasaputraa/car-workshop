@@ -2,6 +2,7 @@
 
 use App\Enums\RoleType;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\User\ProfileController;
 use App\Http\Controllers\Api\V1\User\UserController;
 use App\Http\Controllers\Api\V1\HealthController;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +54,23 @@ Route::prefix('auth')->name('auth.')->group(function () {
         ->get('/verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])
         ->name('email.verification.verify');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Profile
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'active'])
+    ->prefix('profile')
+    ->name('profile.')
+    ->group(function () {
+        Route::get('/', [ProfileController::class, 'show'])->name('show');
+        Route::put('/', [ProfileController::class, 'update'])->name('update');
+        Route::post('/change-password', [ProfileController::class, 'changePassword'])->name('change-password');
+        Route::patch('/avatar', [ProfileController::class, 'uploadAvatar'])->name('upload-avatar');
+    });
+
 
 /*
 |--------------------------------------------------------------------------

@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\User;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Support\Facades\Log;
 use STS\FilamentImpersonate\Facades\Impersonation;
 
 class UserPolicy
@@ -20,6 +21,11 @@ class UserPolicy
     protected function isNotSelf(AuthUser $authUser, User $model): bool
     {
         return $authUser->id !== $model->id;
+    }
+
+    protected function isSelf(AuthUser $authUser, User $model): bool
+    {
+        return $authUser->id === $model->id;
     }
 
     protected function isImpersonating(): bool
@@ -114,7 +120,7 @@ class UserPolicy
 
     /*
     |--------------------------------------------------------------------------
-    | Custom Actions (Filament Actions)
+    | Custom Actions
     |--------------------------------------------------------------------------
     */
 
@@ -134,5 +140,11 @@ class UserPolicy
     {
         return $this->isNotSelf($authUser, $model)
             && $model->hasConfirmedTwoFactor();
+    }
+
+    public function updateProfile(AuthUser $authUser, User $model): bool
+    {
+        return $authUser->can('update_user')
+            && $this->isSelf($authUser, $model);
     }
 }

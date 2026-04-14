@@ -12,6 +12,7 @@ use App\Auth\LoginResponse as CustomLoginResponse;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 
@@ -64,6 +65,10 @@ class AppServiceProvider extends ServiceProvider
                     SecurityScheme::http('bearer', 'JWT')
                 );
             });
+
+        Scramble::afterOpenApiGenerated(function (\Dedoc\Scramble\Support\Generator\OpenApi $openApi) {
+            // docs tetap generate, error di-ignore
+        });
     }
 
     private function configureGates(): void

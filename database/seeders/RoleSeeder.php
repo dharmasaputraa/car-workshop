@@ -4,9 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\RoleType;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -18,43 +16,56 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach (RoleType::cases() as $role) {
+        foreach (RoleType::cases() as $roleEnum) {
             Role::firstOrCreate([
-                'name' => $role->value,
+                'name'       => $roleEnum->value,
+                'guard_name' => 'api',
             ]);
         }
 
-        $superAdminRole = Role::findByName(RoleType::SUPER_ADMIN->value);
-        $superAdminRole->syncPermissions(Permission::all());
+        $superAdminRole = Role::where('name', RoleType::SUPER_ADMIN->value)
+            ->where('guard_name', 'api')
+            ->first();
 
-        $superAdmin = User::firstOrCreate(
-            ['email' => 'superadmin@example.com'],
+        if ($superAdminRole) {
+            $allPermissions = Permission::where('guard_name', 'api')->get();
+            $superAdminRole->syncPermissions($allPermissions);
+        }
+
+        $users = [
             [
-                'name' => 'Super Admin',
-                'password' => Hash::make('password'),
-            ]
-        );
-
-        $superAdmin->assignRole(RoleType::SUPER_ADMIN->value);
-
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+                'email' => 'superadmin@example.com',
+                'name'  => 'Super Admin',
+                'role'  => RoleType::SUPER_ADMIN->value,
+            ],
             [
-                'name' => 'Admin',
-                'password' => Hash::make('password'),
-            ]
-        );
-
-        $admin->assignRole(RoleType::ADMIN->value);
-
-        $user = User::firstOrCreate(
-            ['email' => 'user@example.com'],
+                'email' => 'admin@example.com',
+                'name'  => 'Admin',
+                'role'  => RoleType::ADMIN->value,
+            ],
             [
-                'name' => 'User',
-                'password' => Hash::make('password'),
-            ]
-        );
+                'email' => 'user@example.com',
+                'name'  => 'User',
+                'role'  => RoleType::CUSTOMER->value,
+            ],
+        ];
 
-        $user->assignRole(RoleType::CUSTOMER->value);
+        foreach ($users as $userData) {
+            $user = User::firstOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name'     => $userData['name'],
+                    'password' => Hash::make('password'),
+                ]
+            );
+
+            $role = Role::where('name', $userData['role'])
+                ->where('guard_name', 'api')
+                ->first();
+
+            if ($role) {
+                $user->syncRoles([$role]);
+            }
+        }
     }
 }

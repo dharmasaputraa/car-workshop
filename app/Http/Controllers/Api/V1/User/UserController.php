@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\User\UserService;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
@@ -24,6 +25,11 @@ class UserController extends Controller
         protected UserService $userService
     ) {}
 
+    /**
+     * List Users
+     *
+     * Retrieve a paginated list of active users with filtering, sorting, and eager loading support.
+     */
     #[QueryParameter('filter[is_active]', description: 'Filter by active status', type: 'boolean', example: true)]
     #[QueryParameter('filter[name]', description: 'Filter by name (partial match)', type: 'string', example: 'john')]
     #[QueryParameter('filter[email]', description: 'Filter by email (partial match)', type: 'string', example: 'gmail')]
@@ -32,16 +38,11 @@ class UserController extends Controller
     #[QueryParameter('include', description: 'Include relations: roles', type: 'string', example: 'roles')]
     #[QueryParameter('per_page', description: 'Number of results per page', type: 'integer', example: 15)]
     #[QueryParameter('page', description: 'Page number', type: 'integer', example: 1)]
-    /**
-     * List Users
-     *
-     * Retrieve a paginated list of active users with filtering, sorting, and eager loading support.
-     */
-    public function index(): UserCollection
+    public function index(): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', User::class);
 
-        return new UserCollection(
+        return UserResource::collection(
             $this->userService->getPaginatedUsers()
         );
     }
@@ -103,21 +104,22 @@ class UserController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * List Trashed Users
+     *
+     * Retrieve soft-deleted users with filtering and sorting support.
+     *
+     */
     #[QueryParameter('filter[name]', description: 'Filter by name (partial match)', type: 'string', example: 'john')]
     #[QueryParameter('filter[email]', description: 'Filter by email (partial match)', type: 'string', example: 'gmail')]
     #[QueryParameter('sort', description: 'Sort by field (prefix - for desc). Options: name, deleted_at', type: 'string', example: '-deleted_at')]
     #[QueryParameter('per_page', description: 'Number of results per page', type: 'integer', example: 15)]
     #[QueryParameter('page', description: 'Page number', type: 'integer', example: 1)]
-    /**
-     * List Trashed Users
-     *
-     * Retrieve soft-deleted users with filtering and sorting support.
-     */
-    public function trashed(): UserCollection
+    public function trashed(): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', User::class);
 
-        return new UserCollection(
+        return UserResource::collection(
             $this->userService->getTrashedUsers()
         );
     }
