@@ -3,13 +3,16 @@
 namespace App\Services\User;
 
 use App\Models\User;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\QueryBuilder;
 
 class UserService
 {
+    public function __construct(
+        protected UserRepositoryInterface $userRepository
+    ) {}
+
     private const PER_PAGE = 15;
 
     /*
@@ -20,43 +23,22 @@ class UserService
 
     public function getPaginatedUsers(): LengthAwarePaginator
     {
-        return QueryBuilder::for(User::class)
-            ->allowedFilters(
-                AllowedFilter::exact('is_active'),
-                AllowedFilter::partial('name'),
-                AllowedFilter::partial('email'),
-                AllowedFilter::scope('role', 'whereRoleName'),
-            )
-            ->allowedSorts('name', 'email', 'created_at', 'is_active')
-            ->allowedIncludes('roles')
-            ->defaultSort('-created_at')
-            ->paginate(request()->integer('per_page', self::PER_PAGE))
-            ->appends(request()->query());
+        return $this->userRepository->getPaginatedUsers();
     }
 
     public function getTrashedUsers(): LengthAwarePaginator
     {
-        return QueryBuilder::for(User::onlyTrashed())
-            ->allowedFilters(
-                AllowedFilter::partial('name'),
-                AllowedFilter::partial('email'),
-            )
-            ->allowedSorts('name', 'deleted_at')
-            ->defaultSort('-deleted_at')
-            ->paginate(request()->integer('per_page', self::PER_PAGE))
-            ->appends(request()->query());
+        return $this->userRepository->getTrashedUsers();
     }
 
     public function getUserById(string $id): User
     {
-        return QueryBuilder::for(User::class)
-            ->allowedIncludes('roles')
-            ->findOrFail($id);
+        return $this->userRepository->findById($id);
     }
 
     public function getUserTrashedById(string $id): User
     {
-        return User::withTrashed()->findOrFail($id);
+        return $this->userRepository->findTrashedById($id);
     }
 
     /*
@@ -68,9 +50,9 @@ class UserService
     public function createUser(array $data): User
     {
         return DB::transaction(function () use ($data) {
-            $user = User::create([
-                'name'     => $data['name'],
-                'email'    => $data['email'],
+            $user = $this->userRepository->create([
+                'name' => $data['name'],
+                'email' => $data['email'],
                 'password' => $data['password'],
             ]);
 
@@ -78,14 +60,14 @@ class UserService
                 $user->assignRole($data['role']);
             }
 
-            return $user->load('roles');
+            return $this->userRepository->loadRelations($user, ['roles']);
         });
     }
 
     public function updateUser(User $user, array $data): User
     {
         return DB::transaction(function () use ($user, $data) {
-            $user->update(collect($data)->except('role')->toArray());
+            $this->userRepository->update($user, collect($data)->except('role')->toArray());
 
             return $user->fresh('roles');
         });
@@ -93,21 +75,21 @@ class UserService
 
     public function deleteUser(User $user): void
     {
-        $user->delete(); // soft delete
+        $this->userRepository->delete($user);
     }
 
     public function restoreUser(string $id): User
     {
         $user = $this->getUserTrashedById($id);
 
-        $user->restore();
+        $this->userRepository->restore($user);
 
-        return $user->fresh('roles');
+        return $this->userRepository->loadRelations($user, ['roles']);
     }
 
     public function toggleActive(User $user): User
     {
-        $user->update(['is_active' => !$user->is_active]);
+        $user = $this->userRepository->toggleActive($user);
 
         return $user->fresh();
     }
@@ -115,9 +97,9 @@ class UserService
     public function changeRole(User $user, string $role): User
     {
         return DB::transaction(function () use ($user, $role) {
-            $user->syncRoles([$role]);
+            $user = $this->userRepository->syncRoles($user, [$role]);
 
-            return $user->fresh('roles');
+            return $this->userRepository->loadRelations($user, ['roles']);
         });
     }
 }
