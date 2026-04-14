@@ -3,18 +3,22 @@
 namespace App\Actions\WorkOrders;
 
 use App\Enums\MechanicAssignmentStatus;
+use App\Enums\ServiceItemStatus;
 use App\Enums\WorkOrderStatus;
 use App\Events\MechanicAssigned;
-use App\Models\WorkOrderService;
 use App\Models\MechanicAssignment;
+use App\Repositories\Contracts\MechanicAssignmentRepositoryInterface;
 use App\Repositories\Contracts\WorkOrderRepositoryInterface;
+use App\Repositories\Contracts\WorkOrderServiceRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
 class AssignMechanicToServiceAction
 {
     public function __construct(
-        protected WorkOrderRepositoryInterface $workOrderRepository
+        protected WorkOrderRepositoryInterface $workOrderRepository,
+        protected WorkOrderServiceRepositoryInterface $workOrderServiceRepository,
+        protected MechanicAssignmentRepositoryInterface $mechanicAssignmentRepository
     ) {}
 
     public function execute(string $workOrderServiceId, string $mechanicId): MechanicAssignment
@@ -22,7 +26,7 @@ class AssignMechanicToServiceAction
         return DB::transaction(function () use ($workOrderServiceId, $mechanicId) {
 
             // 1. Find service details
-            $woService = WorkOrderService::with('workOrder')->findOrFail($workOrderServiceId);
+            $woService = $this->workOrderServiceRepository->findById($workOrderServiceId);
             $workOrder = $woService->workOrder;
 
             // 2. Validate Work Order State
@@ -30,18 +34,28 @@ class AssignMechanicToServiceAction
                 throw new Exception("Mechanics can only be assigned to Work Orders that are Approved or In Progress.");
             }
 
-            // 3. Create Mechanic Assignment
-            $assignment = MechanicAssignment::create([
+            // 3. Check for duplicate assignment (same mechanic to same service)
+            $existingAssignment = $woService->mechanicAssignments()
+                ->where('mechanic_id', $mechanicId)
+                ->where('status', '!=', MechanicAssignmentStatus::CANCELED->value)
+                ->first();
+
+            if ($existingAssignment) {
+                throw new Exception("This mechanic is already assigned to this service.");
+            }
+
+            // 4. Create Mechanic Assignment
+            $assignment = $this->mechanicAssignmentRepository->create([
                 'work_order_service_id' => $workOrderServiceId,
                 'mechanic_id'           => $mechanicId,
                 'status'                => MechanicAssignmentStatus::ASSIGNED->value,
                 'assigned_at'           => now(),
             ]);
 
-            // 4. Update WO Service status to in_progress
-            $woService->update(['status' => 'in_progress']); // Adjust with your actual Enum if it exists for service item
+            // 5. Update WO Service status to ASSIGNED (not IN_PROGRESS)
+            $this->workOrderServiceRepository->updateStatus($woService, ServiceItemStatus::ASSIGNED->value);
 
-            // 5. Update main Work Order to IN_PROGRESS (if it was APPROVED)
+            // 6. Update main Work Order to IN_PROGRESS (if it was APPROVED)
             if ($workOrder->status === WorkOrderStatus::APPROVED) {
                 $this->workOrderRepository->updateStatus($workOrder, WorkOrderStatus::IN_PROGRESS->value);
             }

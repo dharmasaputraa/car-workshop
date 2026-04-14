@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\RoleType;
+use App\Enums\WorkOrderStatus;
 use App\Models\Car;
 use App\Models\User;
 use Illuminate\Foundation\Auth\User as AuthUser;
@@ -45,8 +46,9 @@ class CarPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        // Customer diizinkan viewAny, tapi di Controller di-filter berdasarkan owner_id
-        return $authUser->can('view_any_car') || $authUser->hasRole(RoleType::CUSTOMER->value);
+        // Customer dan Mechanic diizinkan viewAny, tapi di Repository di-filter berdasarkan owner_id/assignments
+        return $authUser->can('view_any_car') ||
+            $authUser->hasRole([RoleType::CUSTOMER->value, RoleType::MECHANIC->value]);
     }
 
     public function view(AuthUser $authUser, Car $model): bool
@@ -66,6 +68,15 @@ class CarPolicy
 
     public function delete(AuthUser $authUser, Car $model): bool
     {
+        // Prevent deleting car with active work orders
+        if ($model->workOrders()->whereNotIn('status', [
+            \App\Enums\WorkOrderStatus::COMPLETED->value,
+            \App\Enums\WorkOrderStatus::CANCELED->value,
+            \App\Enums\WorkOrderStatus::INVOICED->value,
+        ])->exists()) {
+            return false;
+        }
+
         return $authUser->can('delete_car') || $this->isOwner($authUser, $model);
     }
 

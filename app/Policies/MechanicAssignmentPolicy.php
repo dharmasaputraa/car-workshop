@@ -63,4 +63,19 @@ class MechanicAssignmentPolicy
     {
         return $authUser->can('delete_mechanic_assignment');
     }
+
+    public function cancel(AuthUser $authUser, MechanicAssignment $model): bool
+    {
+        return $authUser->can('cancel_mechanic_assignment');
+    }
+
+    public function start(AuthUser $authUser, MechanicAssignment $model): bool
+    {
+        return $authUser->can('start_mechanic_assignment') || $this->isAssignedMechanic($authUser, $model);
+    }
+
+    public function complete(AuthUser $authUser, MechanicAssignment $model): bool
+    {
+        return $authUser->can('complete_mechanic_assignment') || $this->isAssignedMechanic($authUser, $model);
+    }
 }

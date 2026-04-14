@@ -3,19 +3,23 @@
 namespace App\Actions\WorkOrders;
 
 use App\Enums\MechanicAssignmentStatus;
+use App\Enums\ServiceItemStatus;
 use App\Models\MechanicAssignment;
 use App\Repositories\Contracts\MechanicAssignmentRepositoryInterface;
+use App\Repositories\Contracts\WorkOrderServiceRepositoryInterface;
 use Exception;
 
 class CancelMechanicAssignmentAction
 {
     public function __construct(
-        protected MechanicAssignmentRepositoryInterface $assignmentRepository
+        protected MechanicAssignmentRepositoryInterface $assignmentRepository,
+        protected WorkOrderServiceRepositoryInterface $workOrderServiceRepository
     ) {}
 
     public function execute(string $id): MechanicAssignment
     {
         $assignment = $this->assignmentRepository->findById($id);
+        $woService = $assignment->workOrderService;
 
         // Daftar status yang TIDAK BOLEH di-cancel
         $uncancelableStates = [
@@ -31,6 +35,12 @@ class CancelMechanicAssignmentAction
         $assignment = $this->assignmentRepository->update($assignment, [
             'status' => MechanicAssignmentStatus::CANCELED->value
         ]);
+
+        // Check if the WorkOrderService still has any active assignments
+        // If not, revert the service status back to PENDING
+        if (!$this->workOrderServiceRepository->hasActiveAssignments($woService)) {
+            $this->workOrderServiceRepository->updateStatus($woService, ServiceItemStatus::PENDING->value);
+        }
 
         // (Opsional) Trigger event jika ingin mengirim notifikasi email ke mekanik
         // bahwa tugasnya dibatalkan

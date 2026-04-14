@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignUuid('complaint_id')->constrained('complaints')->cascadeOnDelete();
             $table->foreignUuid('service_id')->constrained('services')->cascadeOnDelete();
             $table->string('status')->default(ServiceItemStatus::PENDING->value);
+            $table->text('description');
             $table->timestamps();
         });
     }

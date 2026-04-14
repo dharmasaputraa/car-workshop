@@ -117,7 +117,7 @@ class ServiceController extends Controller
     public function toggleActive(string $id): ServiceResource
     {
         $service = $this->serviceService->getServiceById($id);
-        Gate::authorize('update', $service);
+        Gate::authorize('toggleActive', $service);
 
         return new ServiceResource(
             $this->serviceService->toggleActive($service)

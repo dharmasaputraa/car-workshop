@@ -4,6 +4,8 @@ namespace App\Services\MechanicAssignment;
 
 use App\Actions\WorkOrders\AssignMechanicToServiceAction;
 use App\Actions\WorkOrders\CancelMechanicAssignmentAction;
+use App\Actions\WorkOrders\CompleteMechanicAssignmentAction;
+use App\Actions\WorkOrders\StartMechanicAssignmentAction;
 use App\DTOs\Mechanic\MechanicAssignmentData;
 use App\Models\MechanicAssignment;
 use App\Repositories\Contracts\MechanicAssignmentRepositoryInterface;
@@ -15,7 +17,9 @@ class MechanicAssignmentService
     public function __construct(
         protected MechanicAssignmentRepositoryInterface $assignmentRepository,
         protected AssignMechanicToServiceAction $assignMechanicAction,
-        protected CancelMechanicAssignmentAction $cancelMechanicAction
+        protected CancelMechanicAssignmentAction $cancelMechanicAction,
+        protected StartMechanicAssignmentAction $startMechanicAssignmentAction,
+        protected CompleteMechanicAssignmentAction $completeMechanicAssignmentAction
     ) {}
 
     /*
@@ -63,5 +67,15 @@ class MechanicAssignmentService
     public function cancelAssignment(string $id): MechanicAssignment
     {
         return $this->cancelMechanicAction->execute($id);
+    }
+
+    public function startAssignment(string $id): MechanicAssignment
+    {
+        return $this->startMechanicAssignmentAction->execute($id);
+    }
+
+    public function completeAssignment(string $id): array
+    {
+        return $this->completeMechanicAssignmentAction->execute($id);
     }
 }

@@ -23,6 +23,11 @@ class ServicePolicy
             return false;
         }
 
+        // Super Admin selalu bisa melakukan apapun (konsisten dengan policies lain)
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
         return null;
     }
 

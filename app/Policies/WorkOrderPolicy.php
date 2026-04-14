@@ -82,4 +82,39 @@ class WorkOrderPolicy
     {
         return $authUser->can('complete_work_order');
     }
+
+    public function cancel(AuthUser $authUser, WorkOrder $model): bool
+    {
+        return $authUser->can('cancel_work_order') || $this->isCarOwner($authUser, $model);
+    }
+
+    public function markAsInvoiced(AuthUser $authUser, WorkOrder $model): bool
+    {
+        return $authUser->can('mark_invoiced_work_order');
+    }
+
+    public function recordComplaint(AuthUser $authUser, WorkOrder $model): bool
+    {
+        return $authUser->can('record_complaint_work_order') || $this->isCarOwner($authUser, $model);
+    }
+
+    public function assignMechanic(AuthUser $authUser): bool
+    {
+        return $authUser->can('assign_mechanic_work_order');
+    }
+
+    public function cancelMechanicAssignment(AuthUser $authUser): bool
+    {
+        return $authUser->can('assign_mechanic_work_order');
+    }
+
+    public function startWorkOrderService(AuthUser $authUser): bool
+    {
+        return $authUser->can('start_work_order_service');
+    }
+
+    public function completeWorkOrderService(AuthUser $authUser): bool
+    {
+        return $authUser->can('complete_work_order_service');
+    }
 }

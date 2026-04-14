@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1\Mechanic;
 
 use App\DTOs\Mechanic\MechanicAssignmentData;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Mechanic\CompleteMechanicAssignmentRequest;
+use App\Http\Requests\Api\V1\Mechanic\StartMechanicAssignmentRequest;
 use App\Http\Requests\Api\V1\Mechanic\StoreMechanicAssignmentRequest;
 use App\Http\Requests\Api\V1\Mechanic\UpdateMechanicAssignmentRequest;
 use App\Http\Resources\Api\V1\Mechanic\MechanicAssignmentResource;
@@ -115,11 +117,59 @@ class MechanicAssignmentController extends Controller
     {
         $assignment = $this->assignmentService->getAssignmentById($id);
 
-        Gate::authorize('delete', $assignment);
+        Gate::authorize('cancel', $assignment);
 
         $canceledAssignment = $this->assignmentService->cancelAssignment($id);
 
         return (new MechanicAssignmentResource($canceledAssignment))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * Start Mechanic Assignment
+     *
+     * Start a specific mechanic's assignment. If this is the first mechanic to start,
+     * the WorkOrderService will automatically transition to IN_PROGRESS.
+     */
+    public function start(StartMechanicAssignmentRequest $request, string $id): JsonResponse
+    {
+        $assignment = $this->assignmentService->getAssignmentById($id);
+        Gate::authorize('start', $assignment);
+
+        $startedAssignment = $this->assignmentService->startAssignment($id);
+
+        return (new MechanicAssignmentResource($startedAssignment))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * Complete Mechanic Assignment
+     *
+     * Complete a specific mechanic's assignment. If all mechanics have completed their assignments,
+     * the WorkOrderService will automatically transition to COMPLETED.
+     */
+    public function complete(CompleteMechanicAssignmentRequest $request, string $id): JsonResponse
+    {
+        $assignment = $this->assignmentService->getAssignmentById($id);
+        Gate::authorize('complete', $assignment);
+
+        $result = $this->assignmentService->completeAssignment($id);
+
+        $pendingAssignmentsCount = $result['workOrderService']->mechanicAssignments()
+            ->where('status', '!=', \App\Enums\MechanicAssignmentStatus::CANCELED->value)
+            ->where('status', '!=', \App\Enums\MechanicAssignmentStatus::COMPLETED->value)
+            ->count();
+
+        return (new MechanicAssignmentResource($result['assignment']))
+            ->additional([
+                'meta' => [
+                    'service_auto_completed' => $result['serviceAutoCompleted'],
+                    'pending_assignments_count' => $pendingAssignmentsCount,
+                    'work_order_service_status' => $result['workOrderService']->status->value,
+                ]
+            ])
             ->response()
             ->setStatusCode(200);
     }

@@ -20,6 +20,7 @@ class ComplaintService extends Model
         'complaint_id',
         'service_id',
         'status',
+        'description'
     ];
 
     protected $casts = [

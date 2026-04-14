@@ -158,14 +158,18 @@ Route::middleware(['auth:api', 'active'])
     ->prefix('mechanic-assignments')
     ->name('mechanic-assignments.')
     ->group(function () {
+        Route::patch('{id}/start', [MechanicAssignmentController::class, 'start'])->name('start');
+        Route::patch('{id}/complete', [MechanicAssignmentController::class, 'complete'])->name('complete');
+        Route::patch('{id}/cancel', [MechanicAssignmentController::class, 'cancel'])->name('cancel');
+
         Route::apiResource('/', MechanicAssignmentController::class)
             ->parameters(['' => 'id'])
+            ->except(['destroy'])
             ->names([
                 'index'   => 'index',
                 'store'   => 'store',
                 'show'    => 'show',
                 'update'  => 'update',
-                'destroy' => 'destroy',
             ]);
     });
 
@@ -183,16 +187,23 @@ Route::middleware(['auth:api', 'active'])
         Route::patch('{id}/diagnose', [WorkOrderController::class, 'diagnose'])->name('diagnose');
         Route::patch('{id}/approve', [WorkOrderController::class, 'approve'])->name('approve');
         Route::patch('{id}/complete', [WorkOrderController::class, 'complete'])->name('complete');
+        Route::patch('{id}/cancel', [WorkOrderController::class, 'cancel'])->name('cancel');
+
+        Route::patch('{id}/mark-invoiced', [WorkOrderController::class, 'markAsInvoiced'])->name('mark-invoiced');
+        Route::patch('{id}/record-complaint', [WorkOrderController::class, 'recordComplaint'])->name('record-complaint');
 
         Route::patch('services/{workOrderServiceId}/assign-mechanic', [WorkOrderController::class, 'assignMechanic'])->name('assign-mechanic');
+        Route::patch('services/{workOrderServiceId}/start', [WorkOrderController::class, 'startService'])->name('services.start');
+        Route::patch('services/{workOrderServiceId}/complete', [WorkOrderController::class, 'completeService'])->name('services.complete');
+        Route::patch('assignments/{assignmentId}/cancel', [WorkOrderController::class, 'cancelMechanicAssignment'])->name('cancel-mechanic-assignment');
 
         Route::apiResource('/', WorkOrderController::class)
             ->parameters(['' => 'id'])
+            ->except(['destroy'])
             ->names([
                 'index'   => 'index',
                 'store'   => 'store',
                 'show'    => 'show',
                 'update'  => 'update',
-                'destroy' => 'destroy',
             ]);
     });
