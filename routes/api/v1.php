@@ -2,9 +2,13 @@
 
 use App\Enums\RoleType;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Car\CarController;
 use App\Http\Controllers\Api\V1\User\ProfileController;
 use App\Http\Controllers\Api\V1\User\UserController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Mechanic\MechanicAssignmentController;
+use App\Http\Controllers\Api\V1\Service\ServiceController;
+use App\Http\Controllers\Api\V1\WorkOrder\WorkOrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,12 +19,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('health')->name('health.')->group(function () {
     Route::get('/basic', [HealthController::class, 'basic'])->name('basic');
-    Route::get('/full', [HealthController::class, 'full'])->name('full');
+    Route::middleware(['auth:api', 'active'])
+        ->get('/full', [HealthController::class, 'full'])->name('full');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Auth
+| AUTH
 |--------------------------------------------------------------------------
 */
 Route::prefix('auth')->name('auth.')->group(function () {
@@ -57,7 +62,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Profile
+| PROFILE
 |--------------------------------------------------------------------------
 */
 
@@ -74,11 +79,11 @@ Route::middleware(['auth:api', 'active'])
 
 /*
 |--------------------------------------------------------------------------
-| User
+| USER
 |--------------------------------------------------------------------------
 */
 
-Route::middleware([])
+Route::middleware(['auth:api', 'active'])
     ->prefix('users')
     ->name('users.')
     ->group(function () {
@@ -102,51 +107,103 @@ Route::middleware([])
 
 /*
 |--------------------------------------------------------------------------
-| Auth
+| CAR
 |--------------------------------------------------------------------------
 */
-// Route::prefix('auth')->name('auth.')->group(function () {
 
-//     $strictThrottle = app()->isLocal() ? 'throttle:100,1' : 'throttle:3,1';
-//     $loginThrottle  = app()->isLocal() ? 'throttle:100,1' : 'throttle:30,1';
+Route::middleware(['auth:api', 'active'])
+    ->prefix('cars')
+    ->name('cars.')->group(function () {
+        Route::apiResource('/', CarController::class)
+            ->parameters(['' => 'id'])
+            ->names([
+                'index'   => 'index',
+                'store'   => 'store',
+                'show'    => 'show',
+                'update'  => 'update',
+                'destroy' => 'destroy',
+            ]);
+    });
 
-//     // Public (strict)
-//     Route::middleware($strictThrottle)->group(function () {
-//         Route::post('/register', [AuthController::class, 'register'])->name('register');
-//         Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.forgot');
-//         Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.reset');
-//     });
 
-//     // Login (custom throttle)
-//     Route::post('/login', [AuthController::class, 'login'])
-//         ->middleware($loginThrottle)
-//         ->name('login');
+/*
+|--------------------------------------------------------------------------
+| SERVICE
+|--------------------------------------------------------------------------
+*/
 
-//     // OAuth (Public)
-//     Route::get('/social/{provider}/redirect', [AuthController::class, 'redirectToProvider'])
-//         ->name('social.redirect');
-//     Route::get('/social/{provider}/callback', [AuthController::class, 'handleProviderCallback'])
-//         ->name('social.callback');
+Route::middleware(['auth:api', 'active'])
+    ->prefix('services')
+    ->name('services.')->group(function () {
+        Route::patch('{id}/toggle-active', [ServiceController::class, 'toggleActive']);
 
-//     // Authenticated
-//     Route::middleware(['auth:api', 'active'])->group(function () {
-//         Route::post('/refresh', [AuthController::class, 'refresh'])->name('token.refresh');
-//         Route::post('/revoke', [AuthController::class, 'revokeToken'])->name('token.revoke');
+        Route::apiResource('/', ServiceController::class)
+            ->parameters(['' => 'id'])
+            ->names([
+                'index'   => 'index',
+                'store'   => 'store',
+                'show'    => 'show',
+                'update'  => 'update',
+                'destroy' => 'destroy',
+            ]);
+    });
 
-//         Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
-//             ->name('email.verification.resend');
+/*
+|--------------------------------------------------------------------------
+| MECHANIC ASSIGNMENTS
+|--------------------------------------------------------------------------
+*/
 
-//         // Social Account Management
-//         Route::post('/social/link', [AuthController::class, 'linkSocialAccount'])
-//             ->name('social.link');
-//         Route::delete('/social/unlink/{provider}', [AuthController::class, 'unlinkSocialAccount'])
-//             ->name('social.unlink');
-//         Route::get('/social/accounts', [AuthController::class, 'getLinkedAccounts'])
-//             ->name('social.accounts');
-//     });
+Route::middleware(['auth:api', 'active'])
+    ->prefix('mechanic-assignments')
+    ->name('mechanic-assignments.')
+    ->group(function () {
+        Route::patch('{id}/start', [MechanicAssignmentController::class, 'start'])->name('start');
+        Route::patch('{id}/complete', [MechanicAssignmentController::class, 'complete'])->name('complete');
+        Route::patch('{id}/cancel', [MechanicAssignmentController::class, 'cancel'])->name('cancel');
 
-//     // Email verification (signed URL)
-//     Route::middleware('signed')
-//         ->get('/verify-email/{id}/{hash}', [AuthController::class, 'verifyEmail'])
-//         ->name('email.verification.verify');
-// });
+        Route::apiResource('/', MechanicAssignmentController::class)
+            ->parameters(['' => 'id'])
+            ->except(['destroy'])
+            ->names([
+                'index'   => 'index',
+                'store'   => 'store',
+                'show'    => 'show',
+                'update'  => 'update',
+            ]);
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| WORK ORDERS
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'active'])
+    ->prefix('work-orders')
+    ->name('work-orders.')
+    ->group(function () {
+        Route::patch('{id}/diagnose', [WorkOrderController::class, 'diagnose'])->name('diagnose');
+        Route::patch('{id}/approve', [WorkOrderController::class, 'approve'])->name('approve');
+        Route::patch('{id}/complete', [WorkOrderController::class, 'complete'])->name('complete');
+        Route::patch('{id}/cancel', [WorkOrderController::class, 'cancel'])->name('cancel');
+
+        Route::patch('{id}/mark-invoiced', [WorkOrderController::class, 'markAsInvoiced'])->name('mark-invoiced');
+        Route::patch('{id}/record-complaint', [WorkOrderController::class, 'recordComplaint'])->name('record-complaint');
+
+        Route::patch('services/{workOrderServiceId}/assign-mechanic', [WorkOrderController::class, 'assignMechanic'])->name('assign-mechanic');
+        Route::patch('services/{workOrderServiceId}/start', [WorkOrderController::class, 'startService'])->name('services.start');
+        Route::patch('services/{workOrderServiceId}/complete', [WorkOrderController::class, 'completeService'])->name('services.complete');
+        Route::patch('assignments/{assignmentId}/cancel', [WorkOrderController::class, 'cancelMechanicAssignment'])->name('cancel-mechanic-assignment');
+
+        Route::apiResource('/', WorkOrderController::class)
+            ->parameters(['' => 'id'])
+            ->except(['destroy'])
+            ->names([
+                'index'   => 'index',
+                'store'   => 'store',
+                'show'    => 'show',
+                'update'  => 'update',
+            ]);
+    });

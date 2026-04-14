@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Actions\User\ChangeRoleAction;
-use App\Filament\Actions\User\Disable2FAAction;
 use App\Filament\Actions\User\ToggleActiveAction;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\ActionGroup;
@@ -31,9 +30,9 @@ class ViewUser extends ViewRecord
                 ChangeRoleAction::make($this),
                 ToggleActiveAction::make($this),
 
-                ActionGroup::make([
-                    Disable2FAAction::make($this),
-                ])->dropdown(false),
+                // ActionGroup::make([
+                //     Disable2FAAction::make($this),
+                // ])->dropdown(false),
 
                 ActionGroup::make([
                     DeleteAction::make()

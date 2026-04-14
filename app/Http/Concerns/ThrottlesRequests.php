@@ -9,8 +9,8 @@ use Illuminate\Validation\ValidationException;
 trait ThrottlesRequests
 {
     /**
-     * Pastikan request tidak melebihi batas rate limit.
-     * Lempar 422 jika sudah terlalu banyak attempt.
+     * Ensure that requests do not exceed the rate limit.
+     * Throw 422 if there are too many attempts.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -37,7 +37,7 @@ trait ThrottlesRequests
     }
 
     /**
-     * Tambah hit pada throttle key.
+     * Add hit on throttle key.
      */
     protected function hitThrottle(
         Request $request,
@@ -48,7 +48,7 @@ trait ThrottlesRequests
     }
 
     /**
-     * Hapus throttle key setelah berhasil (misal: login sukses).
+     * Delete the throttle key after success (e.g., successful login).
      */
     protected function clearThrottle(Request $request, string $field = 'email'): void
     {
@@ -56,14 +56,14 @@ trait ThrottlesRequests
     }
 
     /**
-     * Bangun Redis key dari nilai field + IP address.
+     * Construct a Redis key from the field value + IP address.
      *
      * Format: throttle:<action>:<value>|<ip>
-     * Contoh: throttle:login:john@example.com|127.0.0.1
+     * Example: throttle:login:john@example.com|127.0.0.1
      *
-     * RateLimiter::hit() / clear() / tooManyAttempts() di Laravel
-     * sudah otomatis pakai cache driver yang dikonfigurasi (Redis).
-     * Key ini cukup unik untuk mencegah brute-force per user per IP.
+     * RateLimiter::hit() / clear() / tooManyAttempts() in Laravel
+     * Automatically uses the configured driver cache (Redis).
+     * This key is unique enough to prevent brute-force attacks per user per IP.
      */
     protected function throttleKey(Request $request, string $field = 'email'): string
     {
@@ -74,8 +74,8 @@ trait ThrottlesRequests
     }
 
     /**
-     * Resolve nama action dari nama class controller secara otomatis.
-     * Contoh: AuthController -> auth, UserController -> user
+     * Automatically resolves the action name from the controller class name.
+     * Example: AuthController -> auth, UserController -> user
      */
     private function resolveThrottleAction(): string
     {

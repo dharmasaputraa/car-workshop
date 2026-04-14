@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Spatie\Permission\Models\Role;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -102,7 +103,11 @@ class UserRepository implements UserRepositoryInterface
 
     public function syncRoles(User $user, array $roles): User
     {
-        $user->syncRoles($roles);
+        $roleInstances = Role::whereIn('name', $roles)
+            ->where('guard_name', 'api')
+            ->get();
+
+        $user->syncRoles($roleInstances);
 
         return $user;
     }

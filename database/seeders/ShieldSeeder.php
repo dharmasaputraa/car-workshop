@@ -21,27 +21,44 @@ class ShieldSeeder extends Seeder
                 "name": "super_admin",
                 "guard_name": "api",
                 "permissions": [
-                    "view_any_role", "view_role", "create_role", "update_role",
-                    "delete_role", "delete_any_role", "restore_role", "force_delete_role",
-                    "force_delete_any_role", "restore_any_role", "replicate_role", "reorder_role",
-                    "view_any_user", "view_user", "create_user", "update_user",
-                    "delete_user", "delete_any_user", "restore_user", "force_delete_user",
-                    "force_delete_any_user", "restore_any_user", "replicate_user", "reorder_user",
-                    "view_my_profile_page", "impersonate_user", "change_role_user", "toggle_active_user"
+                    "view_any_role", "view_role", "create_role", "update_role", "delete_role", "delete_any_role", "restore_role", "force_delete_role", "force_delete_any_role", "restore_any_role", "replicate_role", "reorder_role",
+                    "view_any_user", "view_user", "create_user", "update_user", "delete_user", "delete_any_user", "restore_user", "force_delete_user", "force_delete_any_user", "restore_any_user", "replicate_user", "reorder_user", "view_my_profile_page", "impersonate_user", "change_role_user", "toggle_active_user",
+                    "view_any_car", "view_car", "create_car", "update_car", "delete_car", "delete_any_car", "restore_car", "force_delete_car",
+                    "view_any_service", "view_service", "create_service", "update_service", "delete_service", "toggle_active_service",
+                    "view_any_work_order", "view_work_order", "create_work_order", "update_work_order", "delete_work_order", "cancel_work_order", "diagnose_work_order", "approve_work_order", "complete_work_order", "mark_invoiced_work_order", "record_complaint_work_order", "assign_mechanic_work_order", "start_work_order_service", "complete_work_order_service",
+                    "view_any_mechanic_assignment", "view_mechanic_assignment", "create_mechanic_assignment", "update_mechanic_assignment", "delete_mechanic_assignment", "cancel_mechanic_assignment", "start_mechanic_assignment", "complete_mechanic_assignment"
+                ]
+            },
+            {
+                "name": "admin",
+                "guard_name": "api",
+                "permissions": [
+                    "view_any_user", "view_user", "create_user", "update_user", "toggle_active_user",
+                    "view_any_car", "view_car", "create_car", "update_car", "delete_car",
+                    "view_any_service", "view_service", "create_service", "update_service", "delete_service", "toggle_active_service",
+                    "view_any_work_order", "view_work_order", "create_work_order", "update_work_order", "delete_work_order", "cancel_work_order", "diagnose_work_order", "approve_work_order", "complete_work_order", "mark_invoiced_work_order", "record_complaint_work_order", "assign_mechanic_work_order", "start_work_order_service", "complete_work_order_service",
+                    "view_any_mechanic_assignment", "view_mechanic_assignment", "create_mechanic_assignment", "update_mechanic_assignment", "delete_mechanic_assignment", "cancel_mechanic_assignment", "start_mechanic_assignment", "complete_mechanic_assignment"
                 ]
             },
             {
                 "name": "mechanic",
                 "guard_name": "api",
                 "permissions": [
-                    "view_any_user", "view_user", "create_user", "update_user", "delete_user", "force_delete_user"
+                    "view_user", "update_user",
+                    "view_any_car", "view_car",
+                    "view_any_service", "view_service",
+                    "view_any_work_order", "view_work_order", "diagnose_work_order",
+                    "view_any_mechanic_assignment", "view_mechanic_assignment", "update_mechanic_assignment"
                 ]
             },
             {
                 "name": "customer",
                 "guard_name": "api",
                 "permissions": [
-                    "view_any_user", "view_user", "create_user", "update_user", "delete_user", "force_delete_user"
+                    "view_user", "update_user",
+                    "view_any_car", "view_car", "create_car", "update_car", "delete_car",
+                    "view_any_service", "view_service",
+                    "view_any_work_order", "view_work_order", "approve_work_order"
                 ]
             }
         ]';

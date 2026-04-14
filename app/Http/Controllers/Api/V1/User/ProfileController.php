@@ -11,13 +11,10 @@ use App\Http\Requests\Api\V1\User\Profile\UpdateProfileRequest;
 use App\Http\Requests\Api\V1\User\Profile\UploadAvatarRequest;
 use App\Http\Resources\Api\V1\User\ProfileResource;
 use App\Services\User\ProfileService;
-use Dedoc\Scramble\Attributes\QueryParameter;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
-/**
- * @tags Profile
- */
+#[Group('System - Profile')]
 class ProfileController extends Controller
 {
     public function __construct(
