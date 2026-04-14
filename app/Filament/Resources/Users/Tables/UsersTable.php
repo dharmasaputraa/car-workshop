@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Users\Tables;
 
 use App\Enums\RoleType;
 use App\Filament\Actions\User\ChangeRoleAction;
-use App\Filament\Actions\User\Disable2FAAction;
 use App\Filament\Actions\User\ImpersonateUserAction;
 use App\Filament\Actions\User\ToggleActiveAction;
 use App\Models\User;
@@ -131,7 +130,7 @@ class UsersTable
 
                         ToggleActiveAction::make(),
                         ChangeRoleAction::make(),
-                        Disable2FAAction::make(),
+                        // Disable2FAAction::make(),
 
                     ])->dropdown(false),
 

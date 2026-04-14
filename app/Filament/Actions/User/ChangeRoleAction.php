@@ -31,7 +31,7 @@ class ChangeRoleAction
                     ->native(false),
             ])
             ->action(function (User $record, array $data, UserService $userService): void {
-                $userService->changeRole($record, $data['role']);
+                $userService->changeRole($record, $data['role']->value);
 
                 Notification::make()
                     ->title('Role updated successfully')
