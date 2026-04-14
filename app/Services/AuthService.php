@@ -2,22 +2,26 @@
 
 namespace App\Services;
 
+use App\Actions\Auth\RegisterUser;
+use App\Actions\Auth\ResetUserPassword;
+use App\Actions\Auth\VerifyEmail;
 use App\DTOs\Auth\LoginData;
 use App\DTOs\Auth\RegisterData;
 use App\DTOs\Auth\ResetPasswordData;
-use App\Events\UserRegistered;
 use App\Models\User;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\JWTGuard;
 
 class AuthService
 {
+    public function __construct(
+        protected RegisterUser $registerUser,
+        protected VerifyEmail $verifyEmail,
+        protected ResetUserPassword $resetUserPassword,
+    ) {}
+
     /**
      * Return the currently authenticated user from the API guard.
      */
@@ -27,23 +31,13 @@ class AuthService
     }
 
     /**
-     * Register a new user inside a DB transaction.
+     * Register a new user.
+     * Delegates to RegisterUser action.
      * Token generation is intentionally left to the controller.
      */
     public function register(RegisterData $data): User
     {
-        return DB::transaction(function () use ($data) {
-            $user = User::create([
-                'name'      => $data->name,
-                'email'     => $data->email,
-                'password'  => $data->password,
-                'is_active' => true,
-            ]);
-
-            event(new UserRegistered($user));
-
-            return $user;
-        });
+        return $this->registerUser->execute($data);
     }
 
     /**
@@ -58,7 +52,7 @@ class AuthService
         $guard = $this->guard();
 
         $token = $guard->attempt([
-            'email'    => $data->email,
+            'email' => $data->email,
             'password' => $data->password,
         ]);
 
@@ -115,6 +109,7 @@ class AuthService
 
     /**
      * Reset the user's password using the token sent via email.
+     * Delegates to ResetUserPassword action.
      *
      * @throws ValidationException
      */
@@ -122,14 +117,7 @@ class AuthService
     {
         $status = Password::broker()->reset(
             $data->toArray(),
-            function (User $user, string $password) {
-                $user->forceFill([
-                    'password'       => $password,
-                    'remember_token' => Str::random(60),
-                ])->save();
-
-                event(new PasswordReset($user));
-            }
+            fn(User $user, string $password) => $this->resetUserPassword->execute($user, $password)
         );
 
         if ($status !== Password::PASSWORD_RESET) {
@@ -141,29 +129,13 @@ class AuthService
 
     /**
      * Verify the user's email address via a signed URL.
+     * Delegates to VerifyEmail action.
      *
      * @throws ValidationException
      */
     public function verifyEmail(string $id, string $hash): void
     {
-        /** @var User $user */
-        $user = User::findOrFail($id);
-
-        if (! hash_equals($hash, sha1($user->getEmailForVerification()))) {
-            throw ValidationException::withMessages([
-                'email' => ['Invalid verification link.'],
-            ]);
-        }
-
-        if ($user->hasVerifiedEmail()) {
-            throw ValidationException::withMessages([
-                'email' => ['Email address is already verified.'],
-            ]);
-        }
-
-        if ($user->markEmailAsVerified()) {
-            event(new Verified($user));
-        }
+        $this->verifyEmail->execute($id, $hash);
     }
 
     /**
@@ -195,8 +167,8 @@ class AuthService
     {
         return [
             'access_token' => $token,
-            'token_type'   => 'bearer',
-            'expires_in'   => $this->guard()->factory()->getTTL() * 60,
+            'token_type' => 'bearer',
+            'expires_in' => $this->guard()->factory()->getTTL() * 60,
         ];
     }
 

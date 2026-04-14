@@ -6,11 +6,16 @@ use App\DTOs\User\Profile\ChangePasswordData;
 use App\DTOs\User\Profile\UpdateProfileData;
 use App\DTOs\User\Profile\UploadAvatarData;
 use App\Models\User;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class ProfileService
 {
+    public function __construct(
+        protected UserRepositoryInterface $userRepository
+    ) {}
+
     /*
     |--------------------------------------------------------------------------
     | READ
@@ -19,7 +24,7 @@ class ProfileService
 
     public function getProfile(User $user): User
     {
-        return $user->loadMissing(['roles']);
+        return $this->userRepository->loadMissingRelations($user, ['roles']);
     }
 
     /*
@@ -30,14 +35,14 @@ class ProfileService
 
     public function updateProfile(User $user, UpdateProfileData $data): User
     {
-        $user->update($data->toArray());
+        $this->userRepository->update($user, $data->toArray());
 
         return $user->fresh();
     }
 
     public function changePassword(User $user, ChangePasswordData $data): User
     {
-        $user->update([
+        $this->userRepository->update($user, [
             'password' => Hash::make($data->password),
         ]);
 
@@ -48,14 +53,13 @@ class ProfileService
     {
         return DB::transaction(function () use ($user, $data) {
             // Clear existing avatar from media collection
-            $user->clearMediaCollection('avatars');
+            $this->userRepository->clearMediaCollection($user, 'avatars');
 
             // Add new avatar to media collection (uploads to S3)
-            $media = $user->addMedia($data->avatar)
-                ->toMediaCollection('avatars', 's3');
+            $media = $this->userRepository->addMedia($user, $data->avatar, 'avatars', 's3');
 
             // Update avatar_url field
-            $user->update([
+            $this->userRepository->update($user, [
                 'avatar_url' => $media->getPathRelativeToRoot(),
             ]);
 
