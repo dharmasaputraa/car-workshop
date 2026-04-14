@@ -19,12 +19,10 @@ class ComplaintService extends Model
     protected $fillable = [
         'complaint_id',
         'service_id',
-        'price',
         'status',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
         'status' => \App\Enums\ServiceItemStatus::class,
     ];
 
