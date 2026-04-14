@@ -11,6 +11,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -31,6 +32,12 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
         InteractsWithMedia,
         SoftDeletes,
         HasUuids;
+
+    /**
+     * Forces Spatial Permission to use the 'api' guard by default
+     * for this model, even if called from a web/Filament context.
+     */
+    protected $guard_name = 'api';
 
     /*
     |--------------------------------------------------------------------------
@@ -175,8 +182,7 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
 
     public function canBeImpersonated(): bool
     {
-        // Cegah impersonate email perusahaan internal
-        return !str_ends_with($this->email, '@mycorp.com');
+        return !str_ends_with($this->email, '@carworkshop.com');
     }
 
     /*
@@ -221,7 +227,7 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
 
     /*
     |--------------------------------------------------------------------------
-    | Notification
+    | NOTIFICATIONS
     |--------------------------------------------------------------------------
     */
 
@@ -244,5 +250,38 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(new \App\Notifications\VerifyEmailNotification());
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONSHIPS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * List of cars owned by the user (as Customer).
+     * users ||--o{ cars : "owns"
+     */
+    public function cars(): HasMany
+    {
+        return $this->hasMany(Car::class, 'owner_id');
+    }
+
+    /**
+     * List of Work Orders created by the user (as Admin/Mechanic).
+     * users ||--o{ work_orders : "creates"
+     */
+    public function workOrdersCreated(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class, 'created_by');
+    }
+
+    /**
+     * List of work assignments if the user is a mechanic.
+     * users ||--o{ mechanic_assignments : "performs as mechanic"
+     */
+    public function mechanicAssignments(): HasMany
+    {
+        return $this->hasMany(MechanicAssignment::class, 'mechanic_id');
     }
 }

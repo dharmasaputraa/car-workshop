@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1\User;
 
+use App\DTOs\User\ChangeRoleData;
+use App\DTOs\User\StoreUserData;
+use App\DTOs\User\UpdateUserData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\User\ChangeRoleRequest;
 use App\Http\Requests\Api\V1\User\StoreUserRequest;
@@ -10,15 +13,14 @@ use App\Http\Resources\Api\V1\User\UserCollection;
 use App\Http\Resources\Api\V1\User\UserResource;
 use App\Models\User;
 use App\Services\User\UserService;
+use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
-/**
- * @tags Users
- */
+#[Group('Master Data - Users')]
 class UserController extends Controller
 {
     public function __construct(
@@ -54,7 +56,8 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
-        $user = $this->userService->createUser($request->validated());
+        $dto = StoreUserData::fromArray($request->validated());
+        $user = $this->userService->createUser($dto);
 
         return (new UserResource($user))
             ->response()
@@ -85,8 +88,10 @@ class UserController extends Controller
         $user = $this->userService->getUserById($id);
         Gate::authorize('update', $user);
 
+        $dto = UpdateUserData::fromArray($request->validated());
+
         return new UserResource(
-            $this->userService->updateUser($user, $request->validated())
+            $this->userService->updateUser($user, $dto)
         );
     }
 
@@ -164,8 +169,10 @@ class UserController extends Controller
         $user = $this->userService->getUserById($id);
         Gate::authorize('changeRole', $user);
 
+        $dto = ChangeRoleData::fromArray($request->validated());
+
         return new UserResource(
-            $this->userService->changeRole($user, $request->validated('role'))
+            $this->userService->changeRole($user, $dto)
         );
     }
 }

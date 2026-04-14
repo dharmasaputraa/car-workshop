@@ -5,11 +5,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\HealthResource;
 use App\Services\HealthCheckService;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 
-/**
- * @tags Health
- */
+#[Group('System - Health')]
 class HealthController extends Controller
 {
     public function __construct(

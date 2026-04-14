@@ -12,14 +12,13 @@ use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Requests\Api\V1\Auth\ResetPasswordRequest;
 use App\Http\Resources\Api\V1\Auth\UserAuthResource;
 use App\Services\AuthService;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
-/**
- * @tags Auth
- */
+#[Group('System - Auth')]
 class AuthController extends Controller
 {
     public function __construct(
@@ -144,7 +143,7 @@ class AuthController extends Controller
      * Reset Password
      *
      * Reset the user password using the token from email.
-     * 
+     *
      * @unauthenticated
      */
     public function resetPassword(ResetPasswordRequest $request): JsonResponse

@@ -2,6 +2,9 @@
 
 namespace App\Services\User;
 
+use App\DTOs\User\ChangeRoleData;
+use App\DTOs\User\StoreUserData;
+use App\DTOs\User\UpdateUserData;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -12,8 +15,6 @@ class UserService
     public function __construct(
         protected UserRepositoryInterface $userRepository
     ) {}
-
-    private const PER_PAGE = 15;
 
     /*
     |--------------------------------------------------------------------------
@@ -47,27 +48,27 @@ class UserService
     |--------------------------------------------------------------------------
     */
 
-    public function createUser(array $data): User
+    public function createUser(StoreUserData $data): User
     {
         return DB::transaction(function () use ($data) {
             $user = $this->userRepository->create([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => $data['password'],
+                'name' => $data->name,
+                'email' => $data->email,
+                'password' => $data->password,
             ]);
 
-            if (isset($data['role'])) {
-                $user->assignRole($data['role']);
+            if ($data->role !== null) {
+                $user->assignRole($data->role);
             }
 
             return $this->userRepository->loadRelations($user, ['roles']);
         });
     }
 
-    public function updateUser(User $user, array $data): User
+    public function updateUser(User $user, UpdateUserData $data): User
     {
         return DB::transaction(function () use ($user, $data) {
-            $this->userRepository->update($user, collect($data)->except('role')->toArray());
+            $this->userRepository->update($user, $data->toArray());
 
             return $user->fresh('roles');
         });
@@ -94,10 +95,10 @@ class UserService
         return $user->fresh();
     }
 
-    public function changeRole(User $user, string $role): User
+    public function changeRole(User $user, ChangeRoleData $data): User
     {
-        return DB::transaction(function () use ($user, $role) {
-            $user = $this->userRepository->syncRoles($user, [$role]);
+        return DB::transaction(function () use ($user, $data) {
+            $user = $this->userRepository->syncRoles($user, [$data->role]);
 
             return $this->userRepository->loadRelations($user, ['roles']);
         });

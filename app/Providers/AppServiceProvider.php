@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Filament\Auth\Http\Responses\Contracts\LoginResponse;
-use App\Auth\LoginResponse as CustomLoginResponse;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -26,6 +24,25 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Repositories\Contracts\UserRepositoryInterface::class,
             \App\Repositories\UserRepository::class
+        );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\CarRepositoryInterface::class,
+            \App\Repositories\Eloquent\CarRepository::class
+        );
+        $this->app->bind(
+            \App\Repositories\Contracts\ServiceRepositoryInterface::class,
+            \App\Repositories\Eloquent\ServiceRepository::class
+        );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\WorkOrderRepositoryInterface::class,
+            \App\Repositories\Eloquent\WorkOrderRepository::class
+        );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\MechanicAssignmentRepositoryInterface::class,
+            \App\Repositories\Eloquent\MechanicAssignmentRepository::class
         );
     }
 
