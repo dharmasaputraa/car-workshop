@@ -3,19 +3,20 @@
 namespace App\Http\Resources\Api\V1\User;
 
 use App\Http\Resources\Api\V1\BaseJsonApiResource;
-use App\Http\Resources\Api\V1\User\RoleResource;
 use Illuminate\Http\Request;
 
-class UserResource extends BaseJsonApiResource
+class ProfileResource extends BaseJsonApiResource
 {
-    public function toId(Request $request): string
+    public function __construct($resource)
     {
-        return (string) $this->id;
+        parent::__construct($resource);
+
+        $this->includePreviouslyLoadedRelationships();
     }
 
     public function toType(Request $request): string
     {
-        return 'users';
+        return 'profiles';
     }
 
     public function toAttributes(Request $request): array

@@ -36,11 +36,12 @@ class VerifyEmailNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $verificationUrl = $this->verificationUrl($notifiable);
+        $appName = config('app.name', 'Laravel');
 
         return (new MailMessage)
-            ->subject('Verify Your Toy Store Email Address')
+            ->subject('Verify Your ' . $appName .  ' Email Address')
             ->greeting('Hello, ' . $notifiable->name . '!')
-            ->line('Thank you for registering with Toy Store!')
+            ->line('Thank you for registering with ' . $appName .  '!')
             ->line('Please click the button below to verify your email address.')
             ->action('Verify Email Address', $verificationUrl)
             ->line('If you did not create an account, no further action is required.');

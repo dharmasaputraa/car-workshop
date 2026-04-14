@@ -6,7 +6,7 @@ use App\DTOs\Health\HealthData;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
-class HealthResource extends JsonApiResource
+class HealthResource extends BaseJsonApiResource
 {
     public function __construct(private readonly HealthData $data)
     {

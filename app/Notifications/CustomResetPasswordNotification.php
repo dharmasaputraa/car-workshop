@@ -44,7 +44,7 @@ class CustomResetPasswordNotification extends Notification implements ShouldQueu
         $resetUrl = $frontendUrl . '/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email);
 
         return (new MailMessage)
-            ->subject('Reset Your Toy Store Password')
+            ->subject('Reset Your ' . config('app.name', 'Laravel') .  ' Password')
             ->greeting('Hello, ' . $notifiable->name . '!')
             ->line('You are receiving this email because we received a password reset request for your account.')
             ->action('Reset Password', $resetUrl)
