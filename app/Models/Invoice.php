@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\InvoiceStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Invoice extends Model
 {
-    use HasUuids;
+    use HasFactory, HasUuids;
 
     /*
     |--------------------------------------------------------------------------
@@ -33,8 +35,24 @@ class Invoice extends Model
         'tax'      => 'decimal:2',
         'total'    => 'decimal:2',
         'due_date' => 'date',
-        'status' => \App\Enums\InvoiceStatus::class,
+        'status'   => InvoiceStatus::class,
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSORS & MUTATORS
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Check if invoice is overdue.
+     */
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->due_date && $this->due_date->isPast()
+            && $this->status !== InvoiceStatus::PAID
+            && $this->status !== InvoiceStatus::CANCELED;
+    }
 
     /*
     |--------------------------------------------------------------------------

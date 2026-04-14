@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Car\CarController;
 use App\Http\Controllers\Api\V1\User\ProfileController;
 use App\Http\Controllers\Api\V1\User\UserController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Invoice\InvoiceController;
 use App\Http\Controllers\Api\V1\Mechanic\MechanicAssignmentController;
 use App\Http\Controllers\Api\V1\Service\ServiceController;
 use App\Http\Controllers\Api\V1\WorkOrder\WorkOrderController;
@@ -205,5 +206,30 @@ Route::middleware(['auth:api', 'active'])
                 'store'   => 'store',
                 'show'    => 'show',
                 'update'  => 'update',
+            ]);
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| INVOICES
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'active'])
+    ->prefix('invoices')
+    ->name('invoices.')
+    ->group(function () {
+        Route::post('generate', [InvoiceController::class, 'generate'])->name('generate');
+        Route::patch('{id}/send', [InvoiceController::class, 'send'])->name('send');
+        Route::patch('{id}/pay', [InvoiceController::class, 'pay'])->name('pay');
+        Route::patch('{id}/cancel', [InvoiceController::class, 'cancel'])->name('cancel');
+
+        Route::apiResource('/', InvoiceController::class)
+            ->parameters(['' => 'id'])
+            ->only(['index', 'show'])
+            ->names([
+                'index' => 'index',
+                'show'  => 'show',
             ]);
     });

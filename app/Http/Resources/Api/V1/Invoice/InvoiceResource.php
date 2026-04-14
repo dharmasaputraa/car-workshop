@@ -8,6 +8,12 @@ use Illuminate\Http\Request;
 
 class InvoiceResource extends BaseJsonApiResource
 {
+    public function __construct($resource)
+    {
+        parent::__construct($resource);
+        $this->includePreviouslyLoadedRelationships();
+    }
+
     public function toId(Request $request): string
     {
         return (string) $this->id;
@@ -37,6 +43,13 @@ class InvoiceResource extends BaseJsonApiResource
     {
         return [
             'workOrder' => WorkOrderResource::class,
+        ];
+    }
+
+    public function toMeta(Request $request): array
+    {
+        return [
+            'is_overdue' => $this->is_overdue ?? false,
         ];
     }
 }
