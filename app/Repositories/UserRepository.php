@@ -72,6 +72,7 @@ class UserRepository implements UserRepositoryInterface
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],
+            'is_active' => $data['is_active'] ?? true,
         ]);
     }
 

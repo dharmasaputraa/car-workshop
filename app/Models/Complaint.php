@@ -21,6 +21,9 @@ class Complaint extends Model
         'work_order_id',
         'description',
         'status',
+        'in_progress_at',
+        'resolved_at',
+        'rejected_at',
     ];
 
     protected $casts = [

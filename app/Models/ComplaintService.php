@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ComplaintService extends Model
 {
@@ -20,7 +21,8 @@ class ComplaintService extends Model
         'complaint_id',
         'service_id',
         'status',
-        'description'
+        'description',
+        'price',
     ];
 
     protected $casts = [
@@ -48,5 +50,14 @@ class ComplaintService extends Model
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class, 'service_id');
+    }
+
+    /**
+     * Mechanic assignments for this complaint service.
+     * complaint_services ||--o{ mechanic_assignments : "assigned to"
+     */
+    public function mechanicAssignments(): HasMany
+    {
+        return $this->hasMany(MechanicAssignment::class, 'complaint_service_id');
     }
 }

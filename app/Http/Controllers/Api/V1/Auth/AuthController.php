@@ -104,11 +104,12 @@ class AuthController extends Controller
      *
      * Revoke the current JWT token.
      */
-    public function logout(): JsonResponse
+    public function logout(): UserAuthResource
     {
+        $user = Auth::guard('api')->user()->load('roles');
         $this->authService->revokeToken();
 
-        return response()->json(['message' => 'Logged out successfully.']);
+        return new UserAuthResource($user);
     }
 
     /**
@@ -116,7 +117,7 @@ class AuthController extends Controller
      *
      * Revoke the current JWT token.
      */
-    public function revokeToken(): JsonResponse
+    public function revokeToken(): UserAuthResource
     {
         return $this->logout();
     }
@@ -146,7 +147,11 @@ class AuthController extends Controller
             $request->validated('email')
         );
 
-        return response()->json(['message' => 'Password reset link has been sent to your email.']);
+        return response()->json([
+            'meta' => [
+                'message' => 'Password reset link has been sent to your email.',
+            ],
+        ]);
     }
 
     /**
@@ -162,7 +167,11 @@ class AuthController extends Controller
             ResetPasswordData::fromArray($request->validated())
         );
 
-        return response()->json(['message' => 'Password has been reset successfully.']);
+        return response()->json([
+            'meta' => [
+                'message' => 'Password has been reset successfully.',
+            ],
+        ]);
     }
 
     /**
@@ -192,7 +201,11 @@ class AuthController extends Controller
 
         $this->authService->verifyEmail($id, $hash);
 
-        return response()->json(['message' => 'Email verified successfully.']);
+        return response()->json([
+            'meta' => [
+                'message' => 'Email verified successfully.',
+            ],
+        ]);
     }
 
     /**
@@ -200,12 +213,12 @@ class AuthController extends Controller
      *
      * Resend the email verification link to the authenticated user.
      */
-    public function resendVerificationEmail(): JsonResponse
+    public function resendVerificationEmail(): UserAuthResource
     {
         $user = Auth::guard('api')->user();
 
         $this->authService->resendVerificationEmail($user);
 
-        return response()->json(['message' => 'Verification link sent successfully.']);
+        return new UserAuthResource($user->load('roles'));
     }
 }

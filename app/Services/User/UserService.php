@@ -55,6 +55,7 @@ class UserService
                 'name' => $data->name,
                 'email' => $data->email,
                 'password' => $data->password,
+                'is_active' => $data->isActive,
             ]);
 
             if ($data->role !== null) {

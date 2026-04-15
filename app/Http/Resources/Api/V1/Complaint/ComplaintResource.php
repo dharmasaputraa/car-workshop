@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class ComplaintResource extends BaseJsonApiResource
 {
+    public function __construct($resource)
+    {
+        parent::__construct($resource);
+
+        $this->includePreviouslyLoadedRelationships();
+    }
+
     public function toId(Request $request): string
     {
         return (string) $this->id;
@@ -21,10 +28,13 @@ class ComplaintResource extends BaseJsonApiResource
     public function toAttributes(Request $request): array
     {
         return [
-            'description'  => $this->description,
-            'status'       => $this->status->value ?? $this->status,
-            'created_at'   => $this->created_at?->toIso8601String(),
-            'updated_at'   => $this->updated_at?->toIso8601String(),
+            'description'   => $this->description,
+            'status'        => $this->status->value ?? $this->status,
+            'in_progress_at' => $this->in_progress_at?->toIso8601String(),
+            'resolved_at'    => $this->resolved_at?->toIso8601String(),
+            'rejected_at'    => $this->rejected_at?->toIso8601String(),
+            'created_at'    => $this->created_at?->toIso8601String(),
+            'updated_at'    => $this->updated_at?->toIso8601String(),
         ];
     }
 

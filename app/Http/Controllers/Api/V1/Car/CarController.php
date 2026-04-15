@@ -59,6 +59,15 @@ class CarController extends Controller
 
         $car = $this->carService->createCar($dto);
 
+        if ($includes = $request->input('include')) {
+            $allowedIncludes = ['owner', 'workOrders'];
+            $validIncludes = array_intersect(explode(',', $includes), $allowedIncludes);
+
+            if (!empty($validIncludes)) {
+                $car->load($validIncludes);
+            }
+        }
+
         return (new CarResource($car))
             ->response()
             ->setStatusCode(201);
@@ -82,6 +91,7 @@ class CarController extends Controller
      *
      * Update information for an existing car.
      */
+    #[QueryParameter('include', description: 'Include relations: owner, workOrders', type: 'string', example: 'owner,workOrders')]
     public function update(UpdateCarRequest $request, string $id): CarResource
     {
         $car = $this->carService->getCarById($id);
@@ -90,6 +100,15 @@ class CarController extends Controller
         $dto = UpdateCarData::fromArray($request->validated());
 
         $updatedCar = $this->carService->updateCar($car, $dto);
+
+        if ($includes = $request->input('include')) {
+            $allowedIncludes = ['owner', 'workOrders'];
+            $validIncludes = array_intersect(explode(',', $includes), $allowedIncludes);
+
+            if (!empty($validIncludes)) {
+                $updatedCar->load($validIncludes);
+            }
+        }
 
         return new CarResource($updatedCar);
     }

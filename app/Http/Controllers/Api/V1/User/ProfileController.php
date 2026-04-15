@@ -12,7 +12,6 @@ use App\Http\Requests\Api\V1\User\Profile\UploadAvatarRequest;
 use App\Http\Resources\Api\V1\User\ProfileResource;
 use App\Services\User\ProfileService;
 use Dedoc\Scramble\Attributes\Group;
-use Illuminate\Http\JsonResponse;
 
 #[Group('System - Profile')]
 class ProfileController extends Controller
@@ -55,16 +54,14 @@ class ProfileController extends Controller
      *
      * Change the authenticated user's password.
      */
-    public function changePassword(ChangePasswordRequest $request): JsonResponse
+    public function changePassword(ChangePasswordRequest $request): ProfileResource
     {
         $user = auth('api')->user();
         $data = ChangePasswordData::fromRequest($request);
 
-        $this->profileService->changePassword($user, $data);
+        $user = $this->profileService->changePassword($user, $data);
 
-        return response()->json([
-            'message' => 'Password changed successfully',
-        ]);
+        return new ProfileResource($user);
     }
 
     /**

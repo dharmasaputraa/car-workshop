@@ -4,10 +4,18 @@ namespace App\Http\Resources\Api\V1\Complaint;
 
 use App\Http\Resources\Api\V1\BaseJsonApiResource;
 use App\Http\Resources\Api\V1\Service\ServiceResource;
+use App\Http\Resources\Api\V1\User\UserResource;
 use Illuminate\Http\Request;
 
 class ComplaintServiceResource extends BaseJsonApiResource
 {
+    public function __construct($resource)
+    {
+        parent::__construct($resource);
+
+        $this->includePreviouslyLoadedRelationships();
+    }
+
     public function toId(Request $request): string
     {
         return (string) $this->id;
@@ -15,17 +23,17 @@ class ComplaintServiceResource extends BaseJsonApiResource
 
     public function toType(Request $request): string
     {
-        return 'complaint_services';
+        return 'complaint-services';
     }
 
     public function toAttributes(Request $request): array
     {
         return [
-            'price'        => (float) $this->price,
-            'status'       => $this->status->value ?? $this->status,
-            'status_label' => $this->status->getLabel(),
-            'created_at'   => $this->created_at?->toIso8601String(),
-            'updated_at'   => $this->updated_at?->toIso8601String(),
+            'status'      => $this->status->value ?? $this->status,
+            'description' => $this->description,
+            'price'       => $this->price ? (float) $this->price : null,
+            'created_at'  => $this->created_at?->toIso8601String(),
+            'updated_at'  => $this->updated_at?->toIso8601String(),
         ];
     }
 
@@ -34,6 +42,7 @@ class ComplaintServiceResource extends BaseJsonApiResource
         return [
             'complaint' => ComplaintResource::class,
             'service'   => ServiceResource::class,
+            'mechanic'  => UserResource::class,
         ];
     }
 }

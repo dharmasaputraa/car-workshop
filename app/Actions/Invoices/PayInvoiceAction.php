@@ -3,6 +3,7 @@
 namespace App\Actions\Invoices;
 
 use App\Enums\InvoiceStatus;
+use App\Events\PaymentReceived;
 use App\Models\Invoice;
 use App\Repositories\Contracts\InvoiceRepositoryInterface;
 use App\Services\InvoiceService;
@@ -45,6 +46,8 @@ class PayInvoiceAction
 
         // Optionally, you could store payment details in a separate payment table
         // For now, we just mark the invoice as paid
+
+        PaymentReceived::dispatch($invoice);
 
         return $invoice;
     }
