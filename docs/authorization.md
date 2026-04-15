@@ -75,13 +75,35 @@ This document describes the role-based access control (RBAC) system for the Car 
 | `delete_car`         |     ✅      |  ✅   |    ❌    |   ✅\*   | Delete car (customer deletes own, with active WO guard) |
 
 \* = Data isolation applied (mechanics see only assigned WO cars, customers see only own cars)
-| **Services** |
+| Permission | Super Admin | Admin | Mechanic | Customer | Description |
+|------------------------|------------|-------|----------|----------|----------------------------------------------|
 | `view_any_service` | ✅ | ✅ | ✅ | ✅ | View all services |
 | `view_service` | ✅ | ✅ | ✅ | ✅ | View single service |
 | `create_service` | ✅ | ✅ | ❌ | ❌ | Create service catalog item |
 | `update_service` | ✅ | ✅ | ❌ | ❌ | Update service catalog item |
 | `delete_service` | ✅ | ✅ | ❌ | ❌ | Delete service catalog item |
-| `toggle_active_service` | ✅ | ✅ | ❌ | ❌ | Activate/deactivate service |
+| `toggle_active_service`| ✅ | ✅ | ❌ | ❌ | Activate/deactivate service |
+| `view_any_invoice` | ✅ | ✅ | ❌ | ✅* | View all invoices (data isolation applied) |
+| `view_invoice` | ✅ | ✅ | ❌ | ✅* | View single invoice (data isolation applied) |
+| `create_invoice` | ✅ | ✅ | ❌ | ❌ | Generate invoice from work order |
+| `update_invoice` | ✅ | ✅ | ❌ | ❌ | Update invoice details |
+| `delete_invoice` | ✅ | ✅ | ❌ | ❌ | Delete invoice |
+| `send_invoice` | ✅ | ✅ | ❌ | ❌ | Send invoice to customer |
+| `pay_invoice` | ✅ | ✅ | ❌ | ✅\* | Record payment for invoice |
+| `cancel_invoice` | ✅ | ✅ | ❌ | ❌ | Cancel invoice |
+
+\* = Data isolation applied (customers see only invoices for their own work orders)
+| Permission | Super Admin | Admin | Mechanic | Customer | Description |
+|------------------------------|------------|-------|----------|----------|---------------------------------------------------------------|
+| `view_any_complaint` | ✅ | ✅ | ✅* | ✅* | View all complaints (data isolation applied) |
+| `view_complaint` | ✅ | ✅ | ✅* | ✅* | View single complaint (data isolation applied) |
+| `create_complaint` | ✅ | ✅ | ❌ | ❌ | Create complaint (via work order) |
+| `reassign_complaint` | ✅ | ✅ | ❌ | ❌ | Reassign complaint for rework |
+| `resolve_complaint` | ✅ | ✅ | ❌ | ❌ | Mark complaint as resolved |
+| `reject_complaint` | ✅ | ✅ | ❌ | ❌ | Reject complaint |
+| `assign_mechanic_complaint` | ✅ | ✅ | ❌ | ❌ | Assign mechanic to complaint service |
+
+\* = Data isolation applied (mechanics see only complaints where assigned, customers see only their own work order complaints)
 
 ---
 
@@ -117,6 +139,15 @@ This document describes the role-based access control (RBAC) system for the Car 
 **Additional Constraints:**
 
 - Cars with active Work Orders (DRAFT, DIAGNOSED, APPROVED, IN_PROGRESS status) cannot be deleted
+
+### Invoices
+
+| Role            | Data Scope                                                                        |
+| --------------- | --------------------------------------------------------------------------------- |
+| **Super Admin** | All invoices                                                                      |
+| **Admin**       | All invoices                                                                      |
+| **Mechanic**    | None (cannot view invoices)                                                       |
+| **Customer**    | Only invoices for their own work orders (`workOrder.car.owner_id = auth()->id()`) |
 
 ---
 
@@ -176,12 +207,24 @@ This document describes the role-based access control (RBAC) system for the Car 
 | DELETE    | `/api/v1/services/{id}`        | `delete_service`        | `ServicePolicy::delete()`       |
 | PATCH     | `/api/v1/services/{id}/toggle` | `toggle_active_service` | `ServicePolicy::toggleActive()` |
 
----
+### Invoice Endpoints
 
-## Implementation Notes
+| Method | Endpoint                       | Permission Required | Policy Method              |
+| ------ | ------------------------------ | ------------------- | -------------------------- |
+| GET    | `/api/v1/invoices`             | `view_any_invoice`  | `InvoicePolicy::viewAny()` |
+| POST   | `/api/v1/invoices/generate`    | `create_invoice`    | `InvoicePolicy::create()`  |
+| GET    | `/api/v1/invoices/{id}`        | `view_invoice`      | `InvoicePolicy::view()`    |
+| PATCH  | `/api/v1/invoices/{id}/send`   | `send_invoice`      | `InvoicePolicy::send()`    |
+| PATCH  | `/api/v1/invoices/{id}/pay`    | `pay_invoice`       | `InvoicePolicy::pay()`     |
+| PATCH  | `/api/v1/invoices/{id}/cancel` | `cancel_invoice`    | `InvoicePolicy::cancel()`  |
 
-### Policy Helpers
+### Complaint Endpoints
 
+| Method | Endpoint             | Permission Required  | Policy Method                |
+| ------ | -------------------- | -------------------- | ---------------------------- |
+| GET    | `/api/v1/complaints` | `view_any_complaint` | `ComplaintPolicy::viewAny()` |
+
+| GET
 **WorkOrderPolicy:**
 
 - `isCarOwner()` — Checks if authenticated user owns the car associated with the work order
