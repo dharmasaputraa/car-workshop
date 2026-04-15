@@ -29,7 +29,7 @@ class ReassignComplaintAction
         $complaint = $this->complaintRepository->findById($complaintId);
 
         // Validate complaint status
-        if ($complaint->status !== ComplaintStatus::PENDING->value) {
+        if ($complaint->status !== ComplaintStatus::PENDING) {
             throw new Exception("Only pending complaints can be reassigned.");
         }
 
