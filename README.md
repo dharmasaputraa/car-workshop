@@ -172,9 +172,83 @@ composer dev
 
 ### Testing
 
+#### Run All Tests
+
 ```bash
 php artisan test
 ```
+
+#### Run Per Test Suite (Recommended to Avoid Memory Errors)
+
+Run only Unit tests:
+
+```bash
+php artisan test --testsuite=Unit
+# Or using PHPUnit directly:
+vendor/bin/phpunit --testsuite=Unit
+```
+
+Run only Feature tests:
+
+```bash
+php artisan test --testsuite=Feature
+# Or using PHPUnit directly:
+vendor/bin/phpunit --testsuite=Feature
+```
+
+#### Run Per Test Directory/Group
+
+Run specific test directories:
+
+```bash
+# WorkOrders actions
+php artisan test tests/Unit/Actions/WorkOrders/
+
+# Complaints actions
+php artisan test tests/Unit/Actions/Complaints/
+
+# Invoices actions
+php artisan test tests/Unit/Actions/Invoices/
+
+# Repositories
+php artisan test tests/Unit/Repositories/
+
+# Services
+php artisan test tests/Unit/Services/
+
+# Feature/Api tests
+php artisan test tests/Feature/Api/
+```
+
+#### Run a Single Test File
+
+```bash
+php artisan test tests/Unit/Actions/WorkOrders/CancelWorkOrderActionTest.php
+
+# Or using PHPUnit directly:
+vendor/bin/phpunit tests/Unit/Actions/WorkOrders/CancelWorkOrderActionTest.php
+```
+
+#### Run a Specific Test Method
+
+```bash
+php artisan test --filter testCancelWorkOrder
+```
+
+#### Memory Optimization Tips
+
+The project uses SQLite in-memory (`:memory:`) database which is recreated per test. To avoid memory errors:
+
+1. **Run tests per suite** instead of all at once
+2. **Run tests per directory** for large test groups
+3. **If paratest is installed**, run tests in parallel processes:
+    ```bash
+    vendor/bin/paratest --testsuite=Unit --processes=4
+    ```
+4. **Clean up test artifacts**:
+    ```bash
+    php artisan test --refresh-database
+    ```
 
 ---
 

@@ -29,7 +29,7 @@ class RejectComplaintAction
         $complaint = $this->complaintRepository->findById($complaintId);
 
         // Validate complaint status
-        if ($complaint->status !== ComplaintStatus::PENDING->value && $complaint->status !== ComplaintStatus::IN_PROGRESS->value) {
+        if ($complaint->status !== ComplaintStatus::PENDING && $complaint->status !== ComplaintStatus::IN_PROGRESS) {
             throw new Exception("Only pending or in-progress complaints can be rejected.");
         }
 

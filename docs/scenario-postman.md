@@ -16,6 +16,8 @@
 8. [Scenario 7: Mechanic Assignment Domain](#scenario-7-mechanic-assignment-domain)
 9. [Scenario 8: WorkOrder Edge Cases](#scenario-8-workorder-edge-cases)
 10. [Scenario 9: Data Isolation Tests](#scenario-9-data-isolation-tests)
+11. [Scenario 10: Invoice Domain](#scenario-10-invoice-domain)
+12. [Scenario 11: Complaint Management](#scenario-11-complaint-management) ⭐ NEW
 
 ---
 
@@ -1076,12 +1078,9 @@ Content-Type: application/json
 ```http
 PATCH {{base_url}}/work-orders/{{work_order_id}}/mark-invoiced
 Authorization: Bearer {{admin_token}}
-Content-Type: application/json
-
-{
-  "invoice_number": "INV-2026-1001"
-}
 ```
+
+**No request body needed** — invoice is auto-generated and sent automatically.
 
 **Expected Response (200):**
 
@@ -1091,8 +1090,62 @@ Content-Type: application/json
         "id": "uuid-here",
         "order_number": "WO-2026-1021",
         "status": "invoiced",
-        "invoice_number": "INV-2026-1001",
-        "invoiced_at": "2026-04-15T12:30:00.000000Z"
+        "invoiced_at": "2026-04-15T12:30:00.000000Z",
+        "invoice": {
+            "id": "invoice-uuid",
+            "invoice_number": "INV-202604-0001",
+            "subtotal": 300000.0,
+            "discount": 0.0,
+            "tax": 0.0,
+            "total": 300000.0,
+            "status": "unpaid",
+            "due_date": "2026-04-22",
+            "created_at": "2026-04-15T12:30:00.000000Z",
+            "work_order": {
+                "id": "wo-uuid",
+                "order_number": "WO-2026-1021"
+            }
+        }
+    }
+}
+```
+
+**What happens:**
+
+1. System generates invoice from completed services
+2. Invoice status is immediately set to `unpaid` (not draft)
+3. Email notification is automatically sent to customer
+4. Work order status changes to `invoiced`
+5. Invoice is included in the response
+
+Save the `invoice.id` to `{{invoice_id}}` variable for use in Invoice scenarios.
+
+### 6.9 Customer Views Their Invoice
+
+```http
+GET {{base_url}}/invoices/{{invoice_id}}
+Authorization: Bearer {{customer_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "invoice-uuid",
+        "invoice_number": "INV-202604-0001",
+        "subtotal": 300000.0,
+        "total": 300000.0,
+        "status": "unpaid",
+        "due_date": "2026-04-22",
+        "work_order": {
+            "order_number": "WO-2026-1021",
+            "car": {
+                "plate_number": "B 1234 ABC",
+                "brand": "Toyota",
+                "model": "Camry"
+            }
+        }
     }
 }
 ```
@@ -1528,19 +1581,896 @@ Authorization: Bearer {{admin_token}}
 
 ---
 
+## Scenario 10: Invoice Domain
+
+This scenario tests the complete invoice lifecycle: generation, sending, payment, and cancellation.
+
+### 10.1 Generate Invoice (Admin) - Manual
+
+```http
+POST {{base_url}}/invoices/generate
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "work_order_id": "{{work_order_id}}",
+  "discount": 0.00,
+  "tax": 0.00,
+  "due_date": "2026-04-22"
+}
+```
+
+**Expected Response (201):**
+
+```json
+{
+    "data": {
+        "id": "invoice-uuid",
+        "invoice_number": "INV-202604-0001",
+        "subtotal": 300000.0,
+        "discount": 0.0,
+        "tax": 0.0,
+        "total": 300000.0,
+        "status": "draft",
+        "due_date": "2026-04-22",
+        "created_at": "2026-04-15T12:30:00.000000Z",
+        "work_order": {
+            "id": "wo-uuid",
+            "order_number": "WO-2026-1021",
+            "car": {
+                "plate_number": "B 1234 ABC"
+            }
+        }
+    }
+}
+```
+
+Save the `id` to `{{invoice_id}}` variable.
+
+**Note:** When marking a work order as invoiced (Scenario 6.8), the invoice is auto-generated and sent, so this manual generation is optional.
+
+### 10.2 List All Invoices (Admin)
+
+```http
+GET {{base_url}}/invoices
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": [
+        {
+            "id": "invoice-uuid",
+            "invoice_number": "INV-202604-0001",
+            "total": 300000.0,
+            "status": "draft",
+            "due_date": "2026-04-22"
+        }
+    ],
+    "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1
+    }
+}
+```
+
+### 10.3 Filter Invoices by Status
+
+```http
+GET {{base_url}}/invoices?filter[status]=unpaid
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):** Returns only unpaid invoices.
+
+### 10.4 List Invoices - Customer (Own Invoices Only)
+
+```http
+GET {{base_url}}/invoices
+Authorization: Bearer {{customer_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": [
+        {
+            "id": "invoice-uuid",
+            "invoice_number": "INV-202604-0001",
+            "total": 300000.0,
+            "status": "unpaid",
+            "work_order": {
+                "car": {
+                    "plate_number": "B 1234 ABC"
+                }
+            }
+        }
+    ]
+}
+```
+
+**Data Isolation:** Customer sees only invoices for their own work orders.
+
+### 10.5 Get Single Invoice (Admin)
+
+```http
+GET {{base_url}}/invoices/{{invoice_id}}
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "invoice-uuid",
+        "invoice_number": "INV-202604-0001",
+        "subtotal": 300000.0,
+        "discount": 0.0,
+        "tax": 0.0,
+        "total": 300000.0,
+        "status": "draft",
+        "due_date": "2026-04-22",
+        "created_at": "2026-04-15T12:30:00.000000Z",
+        "updated_at": "2026-04-15T12:30:00.000000Z",
+        "meta": {
+            "is_overdue": false
+        },
+        "work_order": {
+            "id": "wo-uuid",
+            "order_number": "WO-2026-1021",
+            "status": "invoiced",
+            "car": {
+                "id": "car-uuid",
+                "plate_number": "B 1234 ABC",
+                "brand": "Toyota",
+                "model": "Camry"
+            },
+            "owner": {
+                "id": "customer-uuid",
+                "name": "Customer 1",
+                "email": "customer1@example.com"
+            }
+        }
+    }
+}
+```
+
+### 10.6 Send Invoice (Admin) - DRAFT to UNPAID
+
+```http
+PATCH {{base_url}}/invoices/{{invoice_id}}/send
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "invoice-uuid",
+        "invoice_number": "INV-202604-0001",
+        "status": "unpaid",
+        "sent_at": "2026-04-15T12:35:00.000000Z"
+    }
+}
+```
+
+**What happens:**
+
+- Invoice status transitions from `draft` to `unpaid`
+- Email notification is sent to customer
+- `sent_at` timestamp is recorded
+
+### 10.7 Pay Invoice (Admin or Customer)
+
+```http
+PATCH {{base_url}}/invoices/{{invoice_id}}/pay
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "payment_method": "Bank Transfer",
+  "payment_reference": "BCA-123456789",
+  "payment_notes": "Paid via BCA transfer"
+}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "invoice-uuid",
+        "invoice_number": "INV-202604-0001",
+        "total": 300000.0,
+        "status": "paid",
+        "payment_method": "Bank Transfer",
+        "payment_reference": "BCA-123456789",
+        "payment_notes": "Paid via BCA transfer",
+        "paid_at": "2026-04-15T13:00:00.000000Z"
+    }
+}
+```
+
+**What happens:**
+
+- Invoice status transitions from `unpaid` to `paid`
+- Payment details are recorded for bookkeeping
+- `paid_at` timestamp is set
+
+### 10.8 Cancel Invoice (Admin)
+
+```http
+PATCH {{base_url}}/invoices/{{invoice_id}}/cancel
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "invoice-uuid",
+        "invoice_number": "INV-202604-0001",
+        "status": "canceled",
+        "canceled_at": "2026-04-15T13:05:00.000000Z"
+    }
+}
+```
+
+**What happens:**
+
+- Invoice status transitions from `draft` or `unpaid` to `canceled`
+- `canceled_at` timestamp is set
+
+### 10.9 Pay Invoice - Already Paid (Edge Case)
+
+```http
+PATCH {{base_url}}/invoices/{{invoice_id}}/pay
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "payment_method": "Cash"
+}
+```
+
+**Expected Response (400):**
+
+```json
+{
+    "message": "Invoice has already been paid."
+}
+```
+
+### 10.10 Cancel Invoice - Already Paid (Edge Case)
+
+```http
+PATCH {{base_url}}/invoices/{{invoice_id}}/cancel
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (400):**
+
+```json
+{
+    "message": "Cannot cancel a paid invoice."
+}
+```
+
+### 10.11 Send Invoice - Already Sent (Edge Case)
+
+```http
+PATCH {{base_url}}/invoices/{{invoice_id}}/send
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (400):**
+
+```json
+{
+    "message": "Invoice has already been sent."
+}
+```
+
+### 10.12 Mechanic Tries to View Invoice (Forbidden)
+
+```http
+GET {{base_url}}/invoices/{{invoice_id}}
+Authorization: Bearer {{mechanic_token}}
+```
+
+**Expected Response (403):**
+
+```json
+{
+    "message": "You do not have permission to perform this action."
+}
+```
+
+**Data Isolation:** Mechanics cannot access invoices.
+
+### 10.13 Customer Views Overdue Invoice
+
+```http
+GET {{base_url}}/invoices/{{overdue_invoice_id}}
+Authorization: Bearer {{customer_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "invoice-uuid",
+        "invoice_number": "INV-202604-0001",
+        "status": "unpaid",
+        "due_date": "2026-04-10",
+        "meta": {
+            "is_overdue": true
+        }
+    }
+}
+```
+
+**Note:** `meta.is_overdue` is `true` when `status != paid` AND `due_date < now()`.
+
+### 10.14 Generate Invoice - Work Order Not Completed (Edge Case)
+
+```http
+POST {{base_url}}/invoices/generate
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "work_order_id": "{{draft_work_order_id}}",
+  "due_date": "2026-04-22"
+}
+```
+
+**Expected Response (400):**
+
+```json
+{
+    "message": "Work order must be completed before generating an invoice."
+}
+```
+
+---
+
+## Scenario 11: Complaint Management ⭐ NEW
+
+This scenario tests the complete complaint lifecycle: recording, reassigning, resolving, and rejecting complaints.
+
+### 11.1 Record Complaint on Completed WorkOrder (Admin)
+
+```http
+PATCH {{base_url}}/work-orders/{{completed_wo_id}}/record-complaint
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+  "services": [
+    {
+      "service_id": "{{service_id}}",
+      "notes": "Inspect and replace oil pan gasket if necessary"
+    }
+  ]
+}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "wo-uuid",
+        "order_number": "WO-2026-1021",
+        "status": "complained",
+        "complaint_recorded_at": "2026-04-15T15:00:00.000000Z",
+        "complaint": {
+            "id": "complaint-uuid",
+            "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+            "status": "pending",
+            "complaint_services": [
+                {
+                    "id": "cs-uuid",
+                    "service_id": "service-uuid",
+                    "price": 75000.0,
+                    "status": "pending",
+                    "service": {
+                        "name": "Oil Pan Gasket Replacement"
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
+Save the `complaint.id` to `{{complaint_id}}` variable and `complaint.complaint_services[0].id` to `{{complaint_service_id}}`.
+
+**What happens:**
+
+- Work order status changes from `completed` to `complained`
+- A new complaint is created with status `pending`
+- Complaint services are created with prices from the service catalog
+- `WorkOrderComplained` event is dispatched
+- Complaint services have status `pending` (not `complained` - that's the work order status)
+
+### 11.2 List All Complaints (Admin)
+
+```http
+GET {{base_url}}/complaints
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": [
+        {
+            "id": "complaint-uuid",
+            "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+            "status": "pending",
+            "created_at": "2026-04-15T15:00:00.000000Z",
+            "work_order": {
+                "id": "wo-uuid",
+                "order_number": "WO-2026-1021",
+                "car": {
+                    "plate_number": "B 1234 ABC",
+                    "brand": "Toyota",
+                    "model": "Camry"
+                },
+                "owner": {
+                    "id": "customer-uuid",
+                    "name": "Customer 1",
+                    "email": "customer1@example.com"
+                }
+            },
+            "complaint_services": [
+                {
+                    "id": "cs-uuid",
+                    "price": 75000.0,
+                    "status": "pending",
+                    "service": {
+                        "name": "Oil Pan Gasket Replacement"
+                    }
+                }
+            ]
+        }
+    ],
+    "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1
+    }
+}
+```
+
+### 11.3 Get Single Complaint (Admin)
+
+```http
+GET {{base_url}}/complaints/{{complaint_id}}
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "complaint-uuid",
+        "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+        "status": "pending",
+        "created_at": "2026-04-15T15:00:00.000000Z",
+        "updated_at": "2026-04-15T15:00:00.000000Z",
+        "work_order": {
+            "id": "wo-uuid",
+            "order_number": "WO-2026-1021",
+            "status": "complained",
+            "car": {
+                "plate_number": "B 1234 ABC",
+                "brand": "Toyota",
+                "model": "Camry"
+            },
+            "owner": {
+                "id": "customer-uuid",
+                "name": "Customer 1",
+                "email": "customer1@example.com"
+            }
+        },
+        "complaint_services": [
+            {
+                "id": "cs-uuid",
+                "complaint_id": "complaint-uuid",
+                "service_id": "service-uuid",
+                "price": 75000.0,
+                "status": "pending",
+                "mechanic_id": null,
+                "created_at": "2026-04-15T15:00:00.000000Z",
+                "updated_at": "2026-04-15T15:00:00.000000Z",
+                "service": {
+                    "id": "service-uuid",
+                    "name": "Oil Pan Gasket Replacement",
+                    "description": "Replace damaged oil pan gasket",
+                    "base_price": 75000.0,
+                    "is_active": true
+                }
+            }
+        ]
+    }
+}
+```
+
+### 11.4 List Complaints - Customer (Own Complaints Only)
+
+```http
+GET {{base_url}}/complaints
+Authorization: Bearer {{customer_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": [
+        {
+            "id": "complaint-uuid",
+            "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+            "status": "pending",
+            "work_order": {
+                "order_number": "WO-2026-1021",
+                "car": {
+                    "plate_number": "B 1234 ABC"
+                }
+            }
+        }
+    ]
+}
+```
+
+**Data Isolation:** Customer sees only complaints for their own work orders.
+
+### 11.5 List Complaints - Mechanic (Assigned Only)
+
+```http
+GET {{base_url}}/complaints
+Authorization: Bearer {{mechanic_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": [
+        {
+            "id": "complaint-uuid",
+            "status": "in_progress",
+            "complaint_services": [
+                {
+                    "id": "cs-uuid",
+                    "mechanic_id": "mechanic-uuid"
+                }
+            ]
+        }
+    ]
+}
+```
+
+**Data Isolation:** Mechanic sees only complaints where they are assigned to at least one complaint service.
+
+### 11.6 Assign Mechanic to Complaint Service (Admin)
+
+```http
+PATCH {{base_url}}/complaints/services/{{complaint_service_id}}/assign-mechanic
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "mechanic_id": "mechanic-uuid"
+}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "cs-uuid",
+        "complaint_id": "complaint-uuid",
+        "service_id": "service-uuid",
+        "price": 75000.0,
+        "status": "pending",
+        "mechanic_id": "mechanic-uuid",
+        "created_at": "2026-04-15T15:00:00.000000Z",
+        "updated_at": "2026-04-15T15:05:00.000000Z",
+        "service": {
+            "name": "Oil Pan Gasket Replacement"
+        }
+    }
+}
+```
+
+**What happens:**
+
+- A mechanic is assigned to the complaint service
+- Service status remains `pending` (doesn't auto-change to `assigned`)
+- Mechanic can now see this complaint in their list
+
+### 11.7 Reassign Complaint for Rework (Admin)
+
+```http
+PATCH {{base_url}}/complaints/{{complaint_id}}/reassign
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "complaint-uuid",
+        "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+        "status": "in_progress",
+        "created_at": "2026-04-15T15:00:00.000000Z",
+        "updated_at": "2026-04-15T15:10:00.000000Z",
+        "work_order": {
+            "id": "wo-uuid",
+            "order_number": "WO-2026-1021",
+            "status": "in_progress"
+        },
+        "complaint_services": [
+            {
+                "id": "cs-uuid",
+                "status": "pending",
+                "mechanic_id": "mechanic-uuid"
+            }
+        ]
+    }
+}
+```
+
+**What happens:**
+
+- Complaint status changes from `pending` to `in_progress`
+- Work order status changes from `complained` to `in_progress`
+- Work order is now ready for rework
+
+### 11.8 Resolve Complaint (Admin)
+
+```http
+PATCH {{base_url}}/complaints/{{complaint_id}}/resolve
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "complaint-uuid",
+        "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+        "status": "resolved",
+        "created_at": "2026-04-15T15:00:00.000000Z",
+        "updated_at": "2026-04-15T16:30:00.000000Z",
+        "resolved_at": "2026-04-15T16:30:00.000000Z",
+        "work_order": {
+            "id": "wo-uuid",
+            "order_number": "WO-2026-1021",
+            "status": "completed"
+        },
+        "complaint_services": [
+            {
+                "id": "cs-uuid",
+                "status": "completed",
+                "mechanic_id": "mechanic-uuid"
+            }
+        ]
+    }
+}
+```
+
+**What happens:**
+
+- Complaint status changes from `in_progress` to `resolved`
+- Work order status changes from `in_progress` to `completed`
+- All complaint services must be `completed` before resolution
+- `resolved_at` timestamp is set
+- `ComplaintResolved` event is dispatched
+
+### 11.9 Reject Complaint (Admin)
+
+```http
+PATCH {{base_url}}/complaints/{{complaint_id}}/reject
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (200):**
+
+```json
+{
+    "data": {
+        "id": "complaint-uuid",
+        "description": "Customer reported oil leak after service. Need to check oil pan gasket.",
+        "status": "rejected",
+        "created_at": "2026-04-15T15:00:00.000000Z",
+        "updated_at": "2026-04-15T16:00:00.000000Z",
+        "work_order": {
+            "id": "wo-uuid",
+            "order_number": "WO-2026-1021",
+            "status": "completed"
+        },
+        "complaint_services": [
+            {
+                "id": "cs-uuid",
+                "status": "pending"
+            }
+        ]
+    }
+}
+```
+
+**What happens:**
+
+- Complaint status changes from `pending` or `in_progress` to `rejected`
+- Work order status changes back to `completed`
+- Complaint is marked as invalid/wrongful
+
+### 11.10 Record Complaint - Invalid WorkOrder Status (Edge Case)
+
+```http
+PATCH {{base_url}}/work-orders/{{in_progress_wo_id}}/record-complaint
+Authorization: Bearer {{admin_token}}
+Content-Type: application/json
+
+{
+  "description": "Test complaint",
+  "services": []
+}
+```
+
+**Expected Response (403):**
+
+```json
+{
+    "message": "Only COMPLETED work orders can have complaints."
+}
+```
+
+### 11.11 Reassign Non-PENDING Complaint (Edge Case)
+
+```http
+PATCH {{base_url}}/complaints/{{resolved_complaint_id}}/reassign
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (403):**
+
+```json
+{
+    "message": "Only PENDING complaints can be reassigned."
+}
+```
+
+### 11.12 Resolve Incomplete Complaint Services (Edge Case)
+
+```http
+PATCH {{base_url}}/complaints/{{complaint_id_with_incomplete_services}}/resolve
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (403):**
+
+```json
+{
+    "message": "Cannot resolve complaint. Some complaint services are not completed yet."
+}
+```
+
+### 11.13 Reject RESOLVED Complaint (Edge Case)
+
+```http
+PATCH {{base_url}}/complaints/{{resolved_complaint_id}}/reject
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected Response (403):**
+
+```json
+{
+    "message": "Only pending or in-progress complaints can be rejected."
+}
+```
+
+### 11.14 Customer Tries to Reassign Complaint (Forbidden)
+
+```http
+PATCH {{base_url}}/complaints/{{complaint_id}}/reassign
+Authorization: Bearer {{customer_token}}
+```
+
+**Expected Response (403):**
+
+```json
+{
+    "message": "You do not have permission to perform this action."
+}
+```
+
+### 11.15 Mechanic Tries to Resolve Complaint (Forbidden)
+
+```http
+PATCH {{base_url}}/complaints/{{complaint_id}}/resolve
+Authorization: Bearer {{mechanic_token}}
+```
+
+**Expected Response (403):**
+
+```json
+{
+    "message": "You do not have permission to perform this action."
+}
+```
+
+### 11.16 Complete Complaint Lifecycle Summary
+
+**Full Flow:**
+
+1. **COMPLETED** Work Order → **Record Complaint** → **COMPLAINED**
+2. **COMPLAINED** Work Order → **Reassign** → **IN_PROGRESS**
+3. Mechanic performs rework → Complete complaint services
+4. **IN_PROGRESS** Complaint → **Resolve** → **RESOLVED**
+5. **RESOLVED** Complaint → Work Order back to **COMPLETED**
+
+**Alternative Flow (Invalid Complaint):**
+
+1. **COMPLETED** Work Order → **Record Complaint** → **COMPLAINED**
+2. **COMPLAINED** Work Order → **Reject** → **COMPLETED**
+3. Complaint marked as **REJECTED**
+
+### 11.17 Complaint Status Flow Diagram
+
+```
+PENDING
+    │
+    ├─→ Reassign → IN_PROGRESS
+    │                  │
+    │                  └─→ Resolve (all services completed) → RESOLVED
+    │
+    └─→ Reject → REJECTED
+
+IN_PROGRESS
+    │
+    └─→ Resolve (all services completed) → RESOLVED
+    │
+    └─→ Reject → REJECTED
+```
+
+---
+
 ## Summary
 
-This Postman testing guide covers **85+ test cases** across all domains:
+This Postman testing guide covers **100+ test cases** across all domains:
 
 - ✅ Auth: 6 tests
 - ✅ Profile: 4 tests
 - ✅ User Management: 6 tests
 - ✅ Car: 7 tests
 - ✅ Service: 7 tests
-- ✅ WorkOrder Lifecycle: 8 tests
+- ✅ WorkOrder Lifecycle: 9 tests (6.8 + 6.9 added)
 - ✅ Mechanic Assignments: 6 tests
 - ✅ WorkOrder Edge Cases: 5 tests
 - ✅ Data Isolation: 5 tests
+- ✅ Invoice Domain: 14 tests
+- ✅ Complaint Management: 17 tests ⭐ NEW
 
 ### Quick Reference Commands
 

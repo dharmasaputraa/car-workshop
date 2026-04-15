@@ -33,7 +33,7 @@ class ResolveComplaintAction
         $complaint = $this->complaintRepository->findById($complaintId);
 
         // Validate complaint status
-        if ($complaint->status !== ComplaintStatus::IN_PROGRESS->value) {
+        if ($complaint->status !== ComplaintStatus::IN_PROGRESS) {
             throw new Exception("Only in-progress complaints can be resolved.");
         }
 

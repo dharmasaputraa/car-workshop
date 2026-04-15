@@ -148,6 +148,7 @@ class UserServiceTest extends TestCase
                 'name' => 'John Doe',
                 'email' => 'john@example.com',
                 'password' => 'password123',
+                'is_active' => true,
             ])
             ->andReturn($user);
 
@@ -186,6 +187,7 @@ class UserServiceTest extends TestCase
                 'name' => 'Jane Doe',
                 'email' => 'jane@example.com',
                 'password' => 'password123',
+                'is_active' => true,
             ])
             ->andReturn($user);
 

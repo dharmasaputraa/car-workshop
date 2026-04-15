@@ -217,7 +217,24 @@ class AuthControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Logged out successfully.']);
+            ->assertJsonStructure([
+                'data' => [
+                    'id',
+                    'type',
+                    'attributes' => [
+                        'name',
+                        'email',
+                        'avatar_url',
+                        'is_active',
+                        'email_verified_at',
+                        'created_at',
+                        'updated_at',
+                    ],
+                    'meta' => [
+                        'is_super_admin',
+                    ],
+                ],
+            ]);
     }
 
     public function test_logout_unauthenticated(): void
@@ -320,7 +337,7 @@ class AuthControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Password reset link has been sent to your email.']);
+            ->assertJson(['meta' => ['message' => 'Password reset link has been sent to your email.']]);
 
         // Notification is sent via Laravel's Password broker
         $this->assertTrue(true);
@@ -375,7 +392,7 @@ class AuthControllerTest extends TestCase
         $response = $this->getJson($url);
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Email verified successfully.']);
+            ->assertJson(['meta' => ['message' => 'Email verified successfully.']]);
 
         // Verify the user is now verified
         $unverifiedUser->refresh();
@@ -404,7 +421,24 @@ class AuthControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Verification link sent successfully.']);
+            ->assertJsonStructure([
+                'data' => [
+                    'id',
+                    'type',
+                    'attributes' => [
+                        'name',
+                        'email',
+                        'avatar_url',
+                        'is_active',
+                        'email_verified_at',
+                        'created_at',
+                        'updated_at',
+                    ],
+                    'meta' => [
+                        'is_super_admin',
+                    ],
+                ],
+            ]);
 
         // Verify that user is still unverified (the notification was sent)
         $unverifiedUser->refresh();
