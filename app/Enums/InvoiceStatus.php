@@ -8,12 +8,18 @@ use Filament\Support\Contracts\HasLabel;
 /**
  * Defines the lifecycle states of an Invoice.
  * Typical Flow:
- * UNPAID -> PAID
+ * DRAFT -> UNPAID -> PAID
  * Alternative Flow:
- * UNPAID -> CANCELED (If the work order is canceled or invoice is regenerated)
+ * DRAFT -> CANCELED (If the work order is canceled or invoice is discarded)
+ * UNPAID -> CANCELED (If invoice is voided)
  */
 enum InvoiceStatus: string implements HasColor, HasLabel
 {
+    /**
+     * The invoice has been generated but not yet reviewed or sent to the customer.
+     */
+    case DRAFT = 'draft';
+
     /**
      * The invoice has been generated and sent to the customer, but payment has not been received.
      */
@@ -32,6 +38,7 @@ enum InvoiceStatus: string implements HasColor, HasLabel
     public function getLabel(): string
     {
         return match ($this) {
+            self::DRAFT => 'Draft',
             self::UNPAID => 'Unpaid',
             self::PAID => 'Paid',
             self::CANCELED => 'Canceled',
@@ -41,6 +48,7 @@ enum InvoiceStatus: string implements HasColor, HasLabel
     public function getColor(): string
     {
         return match ($this) {
+            self::DRAFT => 'gray',
             self::UNPAID => 'warning',
             self::PAID => 'success',
             self::CANCELED => 'danger',

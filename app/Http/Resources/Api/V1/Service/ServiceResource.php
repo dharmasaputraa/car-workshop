@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1\Service;
 
 use App\Http\Resources\Api\V1\BaseJsonApiResource;
+use App\Http\Resources\Api\V1\WorkOrder\WorkOrderServiceResource;
 use Illuminate\Http\Request;
 
 class ServiceResource extends BaseJsonApiResource
@@ -38,7 +39,8 @@ class ServiceResource extends BaseJsonApiResource
 
     public function toRelationships(Request $request): array
     {
-        // Biasanya master service tidak di-include ke bawah kecuali untuk reporting admin
-        return [];
+        return [
+            'workOrderServices' => WorkOrderServiceResource::class
+        ];
     }
 }

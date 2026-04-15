@@ -5,7 +5,9 @@ use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Car\CarController;
 use App\Http\Controllers\Api\V1\User\ProfileController;
 use App\Http\Controllers\Api\V1\User\UserController;
+use App\Http\Controllers\Api\V1\Complaint\ComplaintController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Invoice\InvoiceController;
 use App\Http\Controllers\Api\V1\Mechanic\MechanicAssignmentController;
 use App\Http\Controllers\Api\V1\Service\ServiceController;
 use App\Http\Controllers\Api\V1\WorkOrder\WorkOrderController;
@@ -94,7 +96,7 @@ Route::middleware(['auth:api', 'active'])
         Route::patch('/{id}/role', [UserController::class, 'changeRole'])->name('change-role');
 
         Route::apiResource('/', UserController::class)
-            ->parameters(['' => 'id'])
+            ->parameters(['' => 'user'])
             ->names([
                 'index'   => 'index',
                 'store'   => 'store',
@@ -115,7 +117,7 @@ Route::middleware(['auth:api', 'active'])
     ->prefix('cars')
     ->name('cars.')->group(function () {
         Route::apiResource('/', CarController::class)
-            ->parameters(['' => 'id'])
+            ->parameters(['' => 'car'])
             ->names([
                 'index'   => 'index',
                 'store'   => 'store',
@@ -135,10 +137,10 @@ Route::middleware(['auth:api', 'active'])
 Route::middleware(['auth:api', 'active'])
     ->prefix('services')
     ->name('services.')->group(function () {
-        Route::patch('{id}/toggle-active', [ServiceController::class, 'toggleActive']);
+        Route::patch('{service}/toggle-active', [ServiceController::class, 'toggleActive']);
 
         Route::apiResource('/', ServiceController::class)
-            ->parameters(['' => 'id'])
+            ->parameters(['' => 'service'])
             ->names([
                 'index'   => 'index',
                 'store'   => 'store',
@@ -205,5 +207,56 @@ Route::middleware(['auth:api', 'active'])
                 'store'   => 'store',
                 'show'    => 'show',
                 'update'  => 'update',
+            ]);
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| COMPLAINTS
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'active'])
+    ->prefix('complaints')
+    ->name('complaints.')
+    ->group(function () {
+        Route::patch('{id}/reassign', [ComplaintController::class, 'reassign'])->name('reassign');
+        Route::patch('{id}/resolve', [ComplaintController::class, 'resolve'])->name('resolve');
+        Route::patch('{id}/reject', [ComplaintController::class, 'reject'])->name('reject');
+
+        Route::patch('services/{complaintServiceId}/assign-mechanic', [ComplaintController::class, 'assignMechanic'])->name('assign-mechanic');
+
+        Route::apiResource('/', ComplaintController::class)
+            ->parameters(['' => 'id'])
+            ->only(['index', 'show'])
+            ->names([
+                'index' => 'index',
+                'show'  => 'show',
+            ]);
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| INVOICES
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:api', 'active'])
+    ->prefix('invoices')
+    ->name('invoices.')
+    ->group(function () {
+        Route::post('generate', [InvoiceController::class, 'generate'])->name('generate');
+        Route::patch('{id}/send', [InvoiceController::class, 'send'])->name('send');
+        Route::patch('{id}/pay', [InvoiceController::class, 'pay'])->name('pay');
+        Route::patch('{id}/cancel', [InvoiceController::class, 'cancel'])->name('cancel');
+
+        Route::apiResource('/', InvoiceController::class)
+            ->parameters(['' => 'id'])
+            ->only(['index', 'show'])
+            ->names([
+                'index' => 'index',
+                'show'  => 'show',
             ]);
     });

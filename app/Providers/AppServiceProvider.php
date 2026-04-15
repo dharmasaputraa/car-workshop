@@ -49,6 +49,21 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\WorkOrderServiceRepositoryInterface::class,
             \App\Repositories\Eloquent\WorkOrderServiceRepository::class
         );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\InvoiceRepositoryInterface::class,
+            \App\Repositories\Eloquent\InvoiceRepository::class
+        );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\ComplaintRepositoryInterface::class,
+            \App\Repositories\Eloquent\ComplaintRepository::class
+        );
+
+        $this->app->bind(
+            \App\Repositories\Contracts\ComplaintServiceRepositoryInterface::class,
+            \App\Repositories\Eloquent\ComplaintServiceRepository::class
+        );
     }
 
     /**

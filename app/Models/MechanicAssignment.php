@@ -20,6 +20,7 @@ class MechanicAssignment extends Model
 
     protected $fillable = [
         'work_order_service_id',
+        'complaint_service_id',
         'mechanic_id',
         'assigned_at',
         'completed_at',
@@ -44,6 +45,14 @@ class MechanicAssignment extends Model
     public function workOrderService(): BelongsTo
     {
         return $this->belongsTo(WorkOrderService::class, 'work_order_service_id');
+    }
+
+    /**
+     * The complaint service item this mechanic is assigned to.
+     */
+    public function complaintService(): BelongsTo
+    {
+        return $this->belongsTo(ComplaintService::class, 'complaint_service_id');
     }
 
     /**

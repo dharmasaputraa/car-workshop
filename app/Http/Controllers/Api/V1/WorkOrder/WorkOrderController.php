@@ -16,8 +16,10 @@ use App\Actions\WorkOrders\RecordWorkOrderComplaintAction;
 use App\Actions\WorkOrders\StartWorkOrderServiceAction;
 use App\Actions\WorkOrders\UpdateWorkOrderAction;
 use App\DTOs\WorkOrder\AssignMechanicData;
+use App\Http\Requests\Api\V1\Complaint\RecordComplaintRequest;
 use App\DTOs\WorkOrder\CreateWorkOrderData;
 use App\DTOs\WorkOrder\DiagnoseWorkOrderData;
+use App\DTOs\WorkOrder\UpdateWorkOrderData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\WorkOrder\AssignMechanicRequest;
 use App\Http\Requests\Api\V1\WorkOrder\CompleteWorkOrderServiceRequest;
@@ -108,8 +110,10 @@ class WorkOrderController extends Controller
         $workOrder = $this->workOrderRepository->findById($id);
         Gate::authorize('update', $workOrder);
 
+        $dto = UpdateWorkOrderData::fromRequest($request);
+
         return new WorkOrderResource(
-            $action->execute($id, $request->validated())
+            $action->execute($id, $dto)
         );
     }
 
@@ -281,6 +285,24 @@ class WorkOrderController extends Controller
 
         return new WorkOrderResource(
             $action->execute($id)
+        );
+    }
+
+    /**
+     * Record Complaint
+     *
+     * Record a complaint on a completed work order.
+     * Transitions state from COMPLETED to COMPLAINED.
+     */
+    public function recordComplaint(RecordComplaintRequest $request, string $id, RecordWorkOrderComplaintAction $action): WorkOrderResource
+    {
+        $workOrder = $this->workOrderRepository->findById($id);
+        Gate::authorize('recordComplaint', $workOrder);
+
+        $dto = \App\DTOs\Complaint\RecordComplaintData::fromRequest($request);
+
+        return new WorkOrderResource(
+            $action->execute($id, $dto->description, $dto->services)
         );
     }
 }

@@ -18,7 +18,7 @@ class SendWorkOrderInvoiceNotificationListener implements ShouldQueue
         $workOrder = $event->workOrder;
 
         // Load relasi jika belum diload
-        $workOrder->loadMissing('car, car.owner');
+        $workOrder->loadMissing(['car', 'car.owner']);
         $owner = $workOrder->car->owner;
 
         if ($owner) {
