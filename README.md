@@ -7,6 +7,7 @@ A modern, full-stack workshop management system built with Laravel, featuring wo
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org)
 [![Redis](https://img.shields.io/badge/Redis-7.2-DC382D?style=for-the-badge&logo=redis)](https://redis.io)
 [![Docker](https://img.shields.io/badge/Docker-24.0-2496ED?style=for-the-badge&logo=docker)](https://docker.com)
+[![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman)](https://documenter.getpostman.com/view/54024615/2sBXqCR4kU)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 ## About
@@ -49,6 +50,7 @@ Read more:
 - [Architecture Documentation (ERD & State Mechine Diagram)](docs/architecture-en.md)
 - [Authorization (Policy and Data Isolation)](docs/authorization.md)
 - [API Reference](docs/architecture-en.md#5-api-endpoints)
+- [Postman API Documentation](https://documenter.getpostman.com/view/54024615/2sBXqCR4kU)
 - [Setup Guide](docs/setup.md)
 
 ---
@@ -160,13 +162,14 @@ composer dev
 
 ### Access
 
-| Service     | URL                            |
-| ----------- | ------------------------------ |
-| API         | http://localhost:8000          |
-| Admin Panel | http://localhost:8000/admin    |
-| API Docs    | http://localhost:8000/docs/api |
-| Mailpit     | http://localhost:18025         |
-| Storage UI  | http://localhost:19001         |
+| Service     | URL                                                        |
+| ----------- | ---------------------------------------------------------- |
+| API         | http://localhost:8000                                      |
+| Admin Panel | http://localhost:8000/admin                                |
+| API Docs    | http://localhost:8000/docs/api                             |
+| Postman     | https://documenter.getpostman.com/view/54024615/2sBXqCR4kU |
+| Mailpit     | http://localhost:18025                                     |
+| Storage UI  | http://localhost:19001                                     |
 
 ---
 
