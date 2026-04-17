@@ -247,7 +247,11 @@ Route::middleware(['auth:api', 'active'])
     ->prefix('invoices')
     ->name('invoices.')
     ->group(function () {
-        Route::post('generate', [InvoiceController::class, 'generate'])->name('generate');
+        // Invoice generation is now automatic:
+        // - Original WO invoice: via PATCH /work-orders/{id}/mark-invoiced
+        // - Complaint invoice: auto-generated on ComplaintResolved event
+        // Route::post('generate', [InvoiceController::class, 'generate'])->name('generate');
+
         Route::patch('{id}/send', [InvoiceController::class, 'send'])->name('send');
         Route::patch('{id}/pay', [InvoiceController::class, 'pay'])->name('pay');
         Route::patch('{id}/cancel', [InvoiceController::class, 'cancel'])->name('cancel');

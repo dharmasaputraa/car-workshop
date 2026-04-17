@@ -56,10 +56,11 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             ->allowedFilters(
                 AllowedFilter::exact('status'),
                 AllowedFilter::exact('work_order_id'),
+                AllowedFilter::exact('complaint_id'),
                 AllowedFilter::partial('invoice_number'),
             )
             ->allowedSorts('invoice_number', 'created_at', 'due_date', 'status', 'total')
-            ->allowedIncludes('workOrder', 'workOrder.car', 'workOrder.car.owner')
+            ->allowedIncludes('workOrder', 'workOrder.car', 'workOrder.car.owner', 'complaint')
             ->defaultSort('-created_at');
 
         return $this->applyDataIsolation($query)
