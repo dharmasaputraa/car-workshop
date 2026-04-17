@@ -29,6 +29,9 @@ class Complaint extends Model
 
     protected $casts = [
         'status' => \App\Enums\ComplaintStatus::class,
+        'in_progress_at' => 'datetime',
+        'resolved_at'    => 'datetime',
+        'rejected_at'    => 'datetime',
     ];
 
     /*

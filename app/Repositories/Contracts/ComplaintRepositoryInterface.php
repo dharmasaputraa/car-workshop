@@ -54,6 +54,11 @@ interface ComplaintRepositoryInterface
     public function findByWorkOrderId(string $workOrderId): ?Complaint;
 
     /**
+     * Find active complaint (pending or in_progress) by work order ID.
+     */
+    public function findActiveByWorkOrderId(string $workOrderId): ?Complaint;
+
+    /**
      * Get complaints for a specific mechanic.
      */
     public function getByMechanicId(string $mechanicId): Collection;

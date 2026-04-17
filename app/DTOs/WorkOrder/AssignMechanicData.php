@@ -7,13 +7,13 @@ use Illuminate\Http\Request;
 class AssignMechanicData
 {
     public function __construct(
-        public string $mechanicId,
+        public array $mechanicIds,
     ) {}
 
     public static function fromRequest(Request $request): self
     {
         return new self(
-            mechanicId: $request->input('mechanic_id'),
+            mechanicIds: $request->input('mechanic_ids', []),
         );
     }
 }

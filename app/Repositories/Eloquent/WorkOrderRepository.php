@@ -68,7 +68,7 @@ class WorkOrderRepository implements WorkOrderRepositoryInterface
                 AllowedFilter::partial('order_number'),
             )
             ->allowedSorts('order_number', 'created_at', 'estimated_completion', 'status')
-            ->allowedIncludes('car', 'car.owner', 'creator', 'workOrderServices', 'workOrderServices.service')
+            ->allowedIncludes('car', 'car.owner', 'creator', 'workOrderServices', 'workOrderServices.service', 'complaints', 'complaints.complaintServices', 'complaints.complaintServices.service')
             ->defaultSort('-created_at');
 
         return $this->applyDataIsolation($query)

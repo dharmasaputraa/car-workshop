@@ -39,10 +39,10 @@ class RecordWorkOrderComplaintAction
             throw new Exception("Only completed work orders can have complaints recorded.");
         }
 
-        // Check if complaint already exists
-        $existingComplaint = $this->complaintRepository->findByWorkOrderId($workOrderId);
-        if ($existingComplaint) {
-            throw new Exception("A complaint already exists for this work order.");
+        // Check if there's an active complaint (pending or in_progress)
+        $activeComplaint = $this->complaintRepository->findActiveByWorkOrderId($workOrderId);
+        if ($activeComplaint) {
+            throw new Exception("An active complaint already exists for this work order. Please resolve or reject it before recording a new one.");
         }
 
         // Create complaint
@@ -61,7 +61,7 @@ class RecordWorkOrderComplaintAction
         // Load relationships
         $workOrder = $this->workOrderRepository->loadMissingRelations(
             $workOrder,
-            ['car.owner', 'creator', 'complaint', 'complaint.complaintServices', 'complaint.complaintServices.service']
+            ['car.owner', 'creator', 'complaints', 'complaints.complaintServices', 'complaints.complaintServices.service']
         );
 
         // Dispatch event

@@ -42,7 +42,7 @@ class ComplaintServiceResource extends BaseJsonApiResource
         return [
             'complaint' => ComplaintResource::class,
             'service'   => ServiceResource::class,
-            'mechanic'  => UserResource::class,
+            'mechanics' => UserResource::class,
         ];
     }
 }

@@ -26,9 +26,9 @@ interface ComplaintServiceRepositoryInterface
     public function updateStatus(ComplaintService $complaintService, string $status): ComplaintService;
 
     /**
-     * Assign a mechanic to a complaint service.
+     * Assign multiple mechanics to a complaint service.
      */
-    public function assignMechanic(ComplaintService $complaintService, string $mechanicId): ComplaintService;
+    public function assignMechanic(ComplaintService $complaintService, array $mechanicIds): ComplaintService;
 
     /**
      * Get all complaint services for a specific mechanic.

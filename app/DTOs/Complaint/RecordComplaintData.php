@@ -12,10 +12,10 @@ class RecordComplaintData
         public readonly array $services
     ) {}
 
-    public static function fromRequest(Request $request): self
+    public static function fromRequest(Request $request, string $workOrderId): self
     {
         return new self(
-            workOrderId: $request->input('work_order_id'),
+            workOrderId: $workOrderId,
             description: $request->input('description'),
             services: $request->input('services', [])
         );

@@ -56,10 +56,11 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             ->allowedFilters(
                 AllowedFilter::exact('status'),
                 AllowedFilter::exact('work_order_id'),
+                AllowedFilter::exact('complaint_id'),
                 AllowedFilter::partial('invoice_number'),
             )
             ->allowedSorts('invoice_number', 'created_at', 'due_date', 'status', 'total')
-            ->allowedIncludes('workOrder', 'workOrder.car', 'workOrder.car.owner')
+            ->allowedIncludes('workOrder', 'workOrder.car', 'workOrder.car.owner', 'complaint')
             ->defaultSort('-created_at');
 
         return $this->applyDataIsolation($query)
@@ -85,6 +86,16 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         return $query->first();
     }
 
+    public function findByComplaintId(string $complaintId): ?Invoice
+    {
+        $query = Invoice::where('complaint_id', $complaintId);
+
+        // Apply data isolation
+        $query = $this->applyDataIsolation($query);
+
+        return $query->first();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | WRITE
@@ -96,6 +107,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         return Invoice::create([
             'invoice_number' => $data['invoice_number'],
             'work_order_id' => $data['work_order_id'],
+            'complaint_id' => $data['complaint_id'] ?? null,
             'subtotal' => $data['subtotal'],
             'discount' => $data['discount'] ?? 0,
             'tax' => $data['tax'] ?? 0,

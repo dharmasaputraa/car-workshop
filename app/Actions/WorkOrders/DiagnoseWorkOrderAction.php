@@ -26,8 +26,9 @@ class DiagnoseWorkOrderAction
     {
         $workOrder = $this->workOrderRepository->findById($workOrderId);
 
-        if ($workOrder->status !== WorkOrderStatus::DRAFT) {
-            throw new Exception("Only Work Orders with DRAFT status can be diagnosed.");
+        // Allow diagnosis on DRAFT (first time) or DIAGNOSED (rediagnosis)
+        if (! in_array($workOrder->status, [WorkOrderStatus::DRAFT, WorkOrderStatus::DIAGNOSED])) {
+            throw new Exception("Only Work Orders with DRAFT or DIAGNOSED status can be diagnosed.");
         }
 
         $this->workOrderRepository->update($workOrder, [

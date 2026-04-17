@@ -159,4 +159,94 @@ class InvoiceService
             throw new Exception("Paid invoices cannot be canceled.");
         }
     }
+
+    /**
+     * Calculate complaint invoice totals from complaint services.
+     *
+     * @param string $complaintId
+     * @return array{subtotal: float, total: float}
+     * @throws Exception
+     */
+    public function calculateComplaintInvoiceTotals(string $complaintId): array
+    {
+        $complaint = \App\Models\Complaint::with('complaintServices')->findOrFail($complaintId);
+
+        // Sum all complaint service prices
+        $subtotal = $complaint->complaintServices->sum('price');
+
+        $total = $subtotal; // Complaint services typically don't have extra tax/discount
+
+        return [
+            'subtotal' => (float) number_format($subtotal, 2, '.', ''),
+            'total' => (float) number_format($total, 2, '.', ''),
+        ];
+    }
+
+    /**
+     * Generate complaint invoice.
+     * Creates a separate invoice for complaint/rework services.
+     *
+     * @param string $complaintId
+     * @param float $discount
+     * @param float $tax
+     * @param string|null $dueDate
+     * @return Invoice
+     * @throws Exception
+     */
+    public function generateComplaintInvoice(
+        string $complaintId,
+        float $discount = 0.0,
+        float $tax = 0.0,
+        ?string $dueDate = null
+    ): Invoice {
+        $complaint = \App\Models\Complaint::findOrFail($complaintId);
+        $workOrder = $this->workOrderRepository->findById($complaint->work_order_id);
+
+        // Check if complaint already has an invoice
+        $existingInvoice = $this->invoiceRepository->findByComplaintId($complaintId);
+        if ($existingInvoice) {
+            throw new Exception("Complaint already has an invoice.");
+        }
+
+        // Calculate totals
+        $totals = $this->calculateComplaintInvoiceTotals($complaintId);
+
+        // Generate complaint invoice number (with 'CR-' prefix for complaint/rework)
+        $prefix = 'CR-';
+        $year = date('Y');
+        $month = date('m');
+
+        $lastInvoice = Invoice::where('invoice_number', 'like', "{$prefix}{$year}{$month}-%")
+            ->orderBy('invoice_number', 'desc')
+            ->first();
+
+        if ($lastInvoice) {
+            $lastNumber = (int) substr($lastInvoice->invoice_number, -4);
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '0001';
+        }
+
+        $invoiceNumber = "{$prefix}{$year}{$month}-{$newNumber}";
+
+        // Set default due date (7 days from now) if not provided
+        if (!$dueDate) {
+            $dueDate = now()->addDays(7)->toDateString();
+        }
+
+        // Create invoice
+        $invoice = $this->invoiceRepository->create([
+            'invoice_number' => $invoiceNumber,
+            'work_order_id' => $workOrder->id,
+            'complaint_id' => $complaintId, // Link to complaint
+            'subtotal' => $totals['subtotal'],
+            'discount' => $discount,
+            'tax' => $tax,
+            'total' => $totals['subtotal'] - $discount + $tax,
+            'status' => InvoiceStatus::DRAFT->value,
+            'due_date' => $dueDate,
+        ]);
+
+        return $invoice;
+    }
 }

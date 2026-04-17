@@ -11,6 +11,7 @@ interface InvoiceRepositoryInterface
     public function getPaginatedInvoices(): LengthAwarePaginator;
     public function findById(string $id): Invoice;
     public function findByWorkOrderId(string $workOrderId): ?Invoice;
+    public function findByComplaintId(string $complaintId): ?Invoice;
 
     // WRITE
     public function create(array $data): Invoice;

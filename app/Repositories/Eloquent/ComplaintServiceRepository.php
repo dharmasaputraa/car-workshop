@@ -59,19 +59,38 @@ class ComplaintServiceRepository implements ComplaintServiceRepositoryInterface
     }
 
     /**
-     * Assign a mechanic to a complaint service.
-     * Creates a MechanicAssignment record instead of updating mechanic_id directly.
+     * Assign multiple mechanics to a complaint service.
+     * Creates MechanicAssignment records for each mechanic and updates the complaint service status to IN_PROGRESS.
      */
-    public function assignMechanic(ComplaintService $complaintService, string $mechanicId): ComplaintService
+    public function assignMechanic(ComplaintService $complaintService, array $mechanicIds): ComplaintService
     {
-        // Create a mechanic assignment record
-        $complaintService->mechanicAssignments()->create([
-            'mechanic_id' => $mechanicId,
-            'status' => MechanicAssignmentStatus::ASSIGNED->value,
-            'assigned_at' => now(),
+        // Create mechanic assignment records for each mechanic
+        foreach ($mechanicIds as $mechanicId) {
+            // Check for duplicate assignment
+            $existingAssignment = $complaintService->mechanicAssignments()
+                ->where('mechanic_id', $mechanicId)
+                ->where('status', '!=', MechanicAssignmentStatus::CANCELED->value)
+                ->first();
+
+            if ($existingAssignment) {
+                // Skip this mechanic if already assigned
+                continue;
+            }
+
+            $complaintService->mechanicAssignments()->create([
+                'mechanic_id' => $mechanicId,
+                'status' => MechanicAssignmentStatus::ASSIGNED->value,
+                'assigned_at' => now(),
+            ]);
+        }
+
+        // Update complaint service status to IN_PROGRESS
+        $complaintService->update([
+            'status' => ServiceItemStatus::IN_PROGRESS->value,
         ]);
 
-        return $complaintService->load('mechanicAssignments.mechanic');
+        // Load mechanics and service relationships for the response
+        return $complaintService->load('mechanics', 'service');
     }
 
     /**
