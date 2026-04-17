@@ -39,7 +39,7 @@ class MechanicAssignmentPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('view_any_mechanic_assignment') || $authUser->hasRole(RoleType::MECHANIC->value);
+        return $authUser->can('view_any_mechanic_assignment');
     }
 
     public function view(AuthUser $authUser, MechanicAssignment $model): bool

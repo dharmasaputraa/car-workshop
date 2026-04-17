@@ -38,7 +38,7 @@ class AuthController extends Controller
             RegisterData::fromArray($request->validated())
         );
 
-        $user->load('roles');
+        $user->load('roles.permissions');
 
         /** @var \Tymon\JWTAuth\JWTGuard $guard */
         $guard = Auth::guard('api');
@@ -76,7 +76,7 @@ class AuthController extends Controller
 
             $this->clearThrottle($request, field: 'email');
 
-            $user = Auth::guard('api')->user()->load('roles');
+            $user = Auth::guard('api')->user()->load('roles.permissions');
 
             return new UserAuthResource($user, $tokenData);
         } catch (ValidationException $e) {
@@ -94,7 +94,7 @@ class AuthController extends Controller
     {
         $tokenData = $this->authService->refresh();
 
-        $user = Auth::guard('api')->user()->load('roles');
+        $user = Auth::guard('api')->user()->load('roles.permissions');
 
         return new UserAuthResource($user, $tokenData);
     }
@@ -106,7 +106,7 @@ class AuthController extends Controller
      */
     public function logout(): UserAuthResource
     {
-        $user = Auth::guard('api')->user()->load('roles');
+        $user = Auth::guard('api')->user()->load('roles.permissions');
         $this->authService->revokeToken();
 
         return new UserAuthResource($user);
@@ -129,7 +129,7 @@ class AuthController extends Controller
      */
     public function me(): UserAuthResource
     {
-        $user = Auth::guard('api')->user()->load('roles');
+        $user = Auth::guard('api')->user()->load('roles.permissions');
 
         return new UserAuthResource($user);
     }
@@ -219,6 +219,6 @@ class AuthController extends Controller
 
         $this->authService->resendVerificationEmail($user);
 
-        return new UserAuthResource($user->load('roles'));
+        return new UserAuthResource($user->load('roles.permissions'));
     }
 }

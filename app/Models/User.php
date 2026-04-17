@@ -222,7 +222,10 @@ class User extends Authenticatable implements HasAvatar, FilamentUser, HasMedia,
      */
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'role' => $this->roles->first()?->name,
+            'permissions' => $this->getAllPermissions()->pluck('name')->values()->toArray(),
+        ];
     }
 
     /*

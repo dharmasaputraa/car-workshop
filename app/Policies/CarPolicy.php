@@ -36,19 +36,12 @@ class CarPolicy
             return false;
         }
 
-        // Super Admin selalu bisa melakukan apapun (opsional, sesuaikan dengan logic Spatie Anda)
-        if ($authUser->hasRole('super_admin')) {
-            return true;
-        }
-
         return null;
     }
 
     public function viewAny(AuthUser $authUser): bool
     {
-        // Customer dan Mechanic diizinkan viewAny, tapi di Repository di-filter berdasarkan owner_id/assignments
-        return $authUser->can('view_any_car') ||
-            $authUser->hasRole([RoleType::CUSTOMER->value, RoleType::MECHANIC->value]);
+        return $authUser->can('view_any_car');
     }
 
     public function view(AuthUser $authUser, Car $model): bool
@@ -58,7 +51,7 @@ class CarPolicy
 
     public function create(AuthUser $authUser): bool
     {
-        return $authUser->can('create_car') || $authUser->hasRole(RoleType::CUSTOMER->value);
+        return $authUser->can('create_car');
     }
 
     public function update(AuthUser $authUser, Car $model): bool

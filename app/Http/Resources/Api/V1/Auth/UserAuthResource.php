@@ -35,6 +35,8 @@ class UserAuthResource extends JsonApiResource
             'email_verified_at' => $this->resource->email_verified_at?->toIso8601String(),
             'created_at'        => $this->resource->created_at?->toIso8601String(),
             'updated_at'        => $this->resource->updated_at?->toIso8601String(),
+            'role'              => $this->resource->roles->first()?->name,
+            'permissions'       => $this->resource->getAllPermissions()->pluck('name')->values()->toArray(),
         ];
     }
 
