@@ -38,6 +38,7 @@ class ShieldSeeder extends Seeder
                     "view_any_car", "view_car", "create_car", "update_car", "delete_car",
                     "view_any_service", "view_service", "create_service", "update_service", "delete_service", "toggle_active_service",
                     "view_any_work_order", "view_work_order", "create_work_order", "update_work_order", "delete_work_order", "cancel_work_order", "diagnose_work_order", "approve_work_order", "complete_work_order", "mark_invoiced_work_order", "record_complaint_work_order", "assign_mechanic_work_order", "start_work_order_service", "complete_work_order_service",
+                    "view_any_invoice", "view_invoice", "create_invoice", "update_invoice", "send_invoice", "pay_invoice", "cancel_invoice",
                     "view_any_mechanic_assignment", "view_mechanic_assignment", "create_mechanic_assignment", "update_mechanic_assignment", "delete_mechanic_assignment", "cancel_mechanic_assignment", "start_mechanic_assignment", "complete_mechanic_assignment"
                 ]
             },

@@ -14,7 +14,8 @@ class AssignMechanicRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'mechanic_id' => ['required', 'string', 'uuid', 'exists:users,id'],
+            'mechanic_ids' => ['required', 'array', 'min:1'],
+            'mechanic_ids.*' => ['required', 'string', 'uuid', 'exists:users,id'],
         ];
     }
 }

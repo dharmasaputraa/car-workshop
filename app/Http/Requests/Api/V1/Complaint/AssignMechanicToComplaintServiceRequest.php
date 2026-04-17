@@ -23,14 +23,18 @@ class AssignMechanicToComplaintServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'mechanic_id' => ['required', 'uuid', 'exists:users,id'],
+            'mechanic_ids' => ['required', 'array', 'min:1'],
+            'mechanic_ids.*' => ['required', 'uuid', 'exists:users,id'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'mechanic_id.exists' => 'The selected mechanic does not exist.',
+            'mechanic_ids.required' => 'At least one mechanic must be assigned.',
+            'mechanic_ids.array' => 'Mechanic IDs must be an array.',
+            'mechanic_ids.min' => 'At least one mechanic must be assigned.',
+            'mechanic_ids.*.exists' => 'The selected mechanic does not exist.',
         ];
     }
 }

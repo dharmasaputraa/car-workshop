@@ -96,6 +96,17 @@ class ComplaintRepository implements ComplaintRepositoryInterface
         return $this->applyDataIsolation($query)->first();
     }
 
+    public function findActiveByWorkOrderId(string $workOrderId): ?Complaint
+    {
+        $query = Complaint::where('work_order_id', $workOrderId)
+            ->whereIn('status', [
+                \App\Enums\ComplaintStatus::PENDING->value,
+                \App\Enums\ComplaintStatus::IN_PROGRESS->value,
+            ]);
+
+        return $this->applyDataIsolation($query)->first();
+    }
+
     public function getByMechanicId(string $mechanicId): Collection
     {
         return Complaint::whereHas('complaintServices.mechanicAssignments', function ($q) use ($mechanicId) {

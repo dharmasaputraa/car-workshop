@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class ComplaintService extends Model
 {
@@ -60,5 +61,21 @@ class ComplaintService extends Model
     public function mechanicAssignments(): HasMany
     {
         return $this->hasMany(MechanicAssignment::class, 'complaint_service_id');
+    }
+
+    /**
+     * Get the assigned mechanics for this complaint service.
+     * Uses hasManyThrough to traverse complaint_service → mechanic_assignments → users (mechanics)
+     */
+    public function mechanics()
+    {
+        return $this->hasManyThrough(
+            User::class,                // Target model
+            MechanicAssignment::class,   // Through model
+            'complaint_service_id',      // FK on mechanic_assignments → complaint_services
+            'mechanic_id',               // FK on mechanic_assignments → users
+            'id',                        // Local key on complaint_services
+            'id'                         // Local key on users
+        );
     }
 }

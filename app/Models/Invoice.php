@@ -21,6 +21,7 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_number',
         'work_order_id',
+        'complaint_id',
         'subtotal',
         'discount',
         'tax',
@@ -67,5 +68,14 @@ class Invoice extends Model
     public function workOrder(): BelongsTo
     {
         return $this->belongsTo(WorkOrder::class);
+    }
+
+    /**
+     * The complaint that this invoice is for (if it's a complaint/rework invoice).
+     * complaints ||--o| invoices : "billed for"
+     */
+    public function complaint(): BelongsTo
+    {
+        return $this->belongsTo(Complaint::class);
     }
 }

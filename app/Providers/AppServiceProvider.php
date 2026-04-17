@@ -74,6 +74,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureScramble();
         $this->configureGates();
+        $this->configureEvents();
     }
 
     /**
@@ -117,5 +118,19 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, $ability) {
             return $user->isSuperAdmin() ? true : null;
         });
+    }
+
+    private function configureEvents(): void
+    {
+        // Complaint Resolved Event Listeners
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\ComplaintResolved::class,
+            \App\Listeners\GenerateComplaintInvoiceOnResolvedListener::class
+        );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\ComplaintResolved::class,
+            \App\Listeners\SendComplaintResolvedNotificationListener::class
+        );
     }
 }

@@ -36,9 +36,18 @@ class RejectComplaintAction
         // Update complaint status to REJECTED
         $complaint = $this->complaintRepository->updateStatus($complaint, ComplaintStatus::REJECTED->value);
 
-        // Update work order status back to COMPLETED
+        // Check if there are other active complaints on this work order
+        $activeComplaint = $this->complaintRepository->findActiveByWorkOrderId($complaint->work_order_id);
+
+        // Update work order status
         $workOrder = $this->workOrderRepository->findById($complaint->work_order_id);
-        $this->workOrderRepository->updateStatus($workOrder, WorkOrderStatus::COMPLETED->value);
+        if ($activeComplaint) {
+            // Still has active complaints, keep as COMPLAINED
+            $this->workOrderRepository->updateStatus($workOrder, WorkOrderStatus::COMPLAINED->value);
+        } else {
+            // No more active complaints, back to COMPLETED
+            $this->workOrderRepository->updateStatus($workOrder, WorkOrderStatus::COMPLETED->value);
+        }
 
         // Load relationships
         $complaint = $this->complaintRepository->loadMissingRelations(

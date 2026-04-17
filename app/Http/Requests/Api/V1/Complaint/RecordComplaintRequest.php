@@ -23,7 +23,6 @@ class RecordComplaintRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'work_order_id' => ['required', 'uuid', 'exists:work_orders,id'],
             'description' => ['required', 'string', 'min:10', 'max:1000'],
             'services' => ['required', 'array', 'min:1'],
             'services.*.service_id' => ['required', 'uuid', 'exists:services,id'],
@@ -34,7 +33,6 @@ class RecordComplaintRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'work_order_id.exists' => 'The selected work order does not exist.',
             'description.min' => 'The description must be at least 10 characters.',
             'services.min' => 'At least one service must be selected.',
             'services.*.service_id.exists' => 'One or more selected services do not exist.',

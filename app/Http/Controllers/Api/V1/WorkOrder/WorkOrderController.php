@@ -209,8 +209,8 @@ class WorkOrderController extends Controller
     /**
      * Assign Mechanic
      *
-     * Assign a mechanic to a specific service item within a work order.
-     * Transitions the service item status to in_progress.
+     * Assign multiple mechanics to a specific service item within a work order.
+     * Transitions the service item status to assigned.
      */
     public function assignMechanic(AssignMechanicRequest $request, string $workOrderServiceId, AssignMechanicToServiceAction $action): JsonResponse
     {
@@ -218,9 +218,11 @@ class WorkOrderController extends Controller
         Gate::authorize('assignMechanic', WorkOrder::class);
 
         $dto = AssignMechanicData::fromRequest($request);
-        $assignment = $action->execute($workOrderServiceId, $dto->mechanicId);
+        $assignments = $action->execute($workOrderServiceId, $dto->mechanicIds);
 
-        return (new MechanicAssignmentResource($assignment))->response()->setStatusCode(201);
+        return MechanicAssignmentResource::collection($assignments)
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
@@ -299,10 +301,10 @@ class WorkOrderController extends Controller
         $workOrder = $this->workOrderRepository->findById($id);
         Gate::authorize('recordComplaint', $workOrder);
 
-        $dto = \App\DTOs\Complaint\RecordComplaintData::fromRequest($request);
+        $dto = \App\DTOs\Complaint\RecordComplaintData::fromRequest($request, $id);
 
         return new WorkOrderResource(
-            $action->execute($id, $dto->description, $dto->services)
+            $action->execute($dto->workOrderId, $dto->description, $dto->services)
         );
     }
 }

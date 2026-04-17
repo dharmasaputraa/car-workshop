@@ -102,17 +102,17 @@ class ComplaintController extends Controller
     /**
      * Assign Mechanic to Complaint Service
      *
-     * Assign a mechanic to a specific complaint service.
+     * Assign multiple mechanics to a specific complaint service.
      */
     public function assignMechanic(
         string $complaintServiceId,
         AssignMechanicToComplaintServiceRequest $request
     ): JsonResponse {
         $complaintService = $this->complaintServiceRepository->findById($complaintServiceId);
-        Gate::authorize('assignMechanic', Complaint::class);
+        Gate::authorize('assignMechanic', $complaintService->complaint);
 
         $dto = \App\DTOs\Complaint\AssignMechanicToComplaintServiceData::fromRequest($request);
-        $complaintService = $this->complaintServiceRepository->assignMechanic($complaintService, $dto->mechanicId);
+        $complaintService = $this->complaintServiceRepository->assignMechanic($complaintService, $dto->mechanicIds);
 
         return (new \App\Http\Resources\Api\V1\Complaint\ComplaintServiceResource($complaintService))
             ->response()
