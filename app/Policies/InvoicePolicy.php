@@ -39,7 +39,7 @@ class InvoicePolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('view_any_invoice') || $authUser->hasRole(RoleType::CUSTOMER->value);
+        return $authUser->can('view_any_invoice');
     }
 
     public function view(AuthUser $authUser, Invoice $model): bool

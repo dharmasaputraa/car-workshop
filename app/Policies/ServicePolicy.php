@@ -23,22 +23,17 @@ class ServicePolicy
             return false;
         }
 
-        // Super Admin selalu bisa melakukan apapun (konsisten dengan policies lain)
-        if ($authUser->hasRole('super_admin')) {
-            return true;
-        }
-
         return null;
     }
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('view_any_service') || $authUser->hasRole([RoleType::CUSTOMER->value, RoleType::MECHANIC->value]);
+        return $authUser->can('view_any_service');
     }
 
     public function view(AuthUser $authUser, Service $model): bool
     {
-        return $authUser->can('view_service') || $authUser->hasRole([RoleType::CUSTOMER->value, RoleType::MECHANIC->value]);
+        return $authUser->can('view_service');
     }
 
     public function create(AuthUser $authUser): bool

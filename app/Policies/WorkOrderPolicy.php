@@ -39,7 +39,7 @@ class WorkOrderPolicy
 
     public function viewAny(AuthUser $authUser): bool
     {
-        return $authUser->can('view_any_work_order') || $authUser->hasRole([RoleType::CUSTOMER->value, RoleType::MECHANIC->value]);
+        return $authUser->can('view_any_work_order');
     }
 
     public function view(AuthUser $authUser, WorkOrder $model): bool
@@ -70,7 +70,7 @@ class WorkOrderPolicy
 
     public function diagnose(AuthUser $authUser, WorkOrder $model): bool
     {
-        return $authUser->can('diagnose_work_order') || $authUser->hasRole(RoleType::MECHANIC->value);
+        return $authUser->can('diagnose_work_order');
     }
 
     public function approve(AuthUser $authUser, WorkOrder $model): bool
