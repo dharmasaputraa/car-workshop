@@ -93,7 +93,7 @@ class DiagnoseWorkOrderActionTest extends TestCase
     public function test_diagnose_throws_exception_when_not_draft(): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Only Work Orders with DRAFT status can be diagnosed.');
+        $this->expectExceptionMessage('Only Work Orders with DRAFT or DIAGNOSED status can be diagnosed.');
 
         $workOrder = Mockery::mock(WorkOrder::class)->makePartial();
         $workOrder->status = WorkOrderStatus::APPROVED->value;

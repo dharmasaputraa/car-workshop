@@ -70,6 +70,12 @@ class ResolveComplaintActionTest extends TestCase
             ->andReturn(true);
 
         $this->complaintRepositoryMock
+            ->shouldReceive('findActiveByWorkOrderId')
+            ->once()
+            ->with($complaint->work_order_id)
+            ->andReturn(null);
+
+        $this->complaintRepositoryMock
             ->shouldReceive('updateStatus')
             ->once()
             ->with($complaint, ComplaintStatus::RESOLVED->value)

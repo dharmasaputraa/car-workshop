@@ -55,10 +55,10 @@ class RecordWorkOrderComplaintActionTest extends TestCase
             ->andReturn($workOrder);
 
         $this->complaintRepositoryMock
-            ->shouldReceive('findByWorkOrderId')
+            ->shouldReceive('findActiveByWorkOrderId')
             ->once()
             ->with('wo-123')
-            ->andReturnNull();
+            ->andReturn(null);
 
         $this->complaintRepositoryMock
             ->shouldReceive('create')
@@ -126,7 +126,7 @@ class RecordWorkOrderComplaintActionTest extends TestCase
     public function test_record_throws_exception_when_complaint_exists(): void
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('A complaint already exists for this work order.');
+        $this->expectExceptionMessage('An active complaint already exists for this work order. Please resolve or reject it before recording a new one.');
 
         /** @var WorkOrder|MockInterface $workOrder */
         $workOrder = Mockery::mock(WorkOrder::class)->makePartial();
@@ -142,7 +142,7 @@ class RecordWorkOrderComplaintActionTest extends TestCase
             ->andReturn($workOrder);
 
         $this->complaintRepositoryMock
-            ->shouldReceive('findByWorkOrderId')
+            ->shouldReceive('findActiveByWorkOrderId')
             ->once()
             ->with('wo-123')
             ->andReturn($existingComplaint);
