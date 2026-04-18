@@ -98,9 +98,10 @@ class AssignMechanicToServiceActionTest extends TestCase
             $this->mechanicAssignmentRepositoryMock
         );
 
-        $result = $action->execute('wos-123', 'mech-123');
+        $result = $action->execute('wos-123', ['mech-123']);
 
-        $this->assertSame($assignment, $result);
+        $this->assertCount(1, $result);
+        $this->assertSame($assignment, $result->first());
         Event::assertDispatched(MechanicAssigned::class);
     }
 
@@ -157,9 +158,10 @@ class AssignMechanicToServiceActionTest extends TestCase
             $this->mechanicAssignmentRepositoryMock
         );
 
-        $result = $action->execute('wos-123', 'mech-123');
+        $result = $action->execute('wos-123', ['mech-123']);
 
-        $this->assertSame($assignment, $result);
+        $this->assertCount(1, $result);
+        $this->assertSame($assignment, $result->first());
     }
 
     public function test_assign_throws_exception_when_work_order_not_approved(): void
@@ -187,14 +189,11 @@ class AssignMechanicToServiceActionTest extends TestCase
             $this->mechanicAssignmentRepositoryMock
         );
 
-        $action->execute('wos-123', 'mech-123');
+        $action->execute('wos-123', ['mech-123']);
     }
 
-    public function test_assign_throws_exception_when_mechanic_already_assigned(): void
+    public function test_assign_skips_mechanic_already_assigned(): void
     {
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('This mechanic is already assigned to this service.');
-
         /** @var WorkOrder|MockInterface $workOrder */
         $workOrder = Mockery::mock(WorkOrder::class)->makePartial();
         $workOrder->status = WorkOrderStatus::APPROVED->value;
@@ -221,13 +220,27 @@ class AssignMechanicToServiceActionTest extends TestCase
             ->with('wos-123')
             ->andReturn($woService);
 
+        $this->mechanicAssignmentRepositoryMock
+            ->shouldReceive('create')
+            ->never();
+
+        $this->workOrderServiceRepositoryMock
+            ->shouldReceive('updateStatus')
+            ->never();
+
+        $this->workOrderRepositoryMock
+            ->shouldReceive('updateStatus')
+            ->never();
+
         $action = new AssignMechanicToServiceAction(
             $this->workOrderRepositoryMock,
             $this->workOrderServiceRepositoryMock,
             $this->mechanicAssignmentRepositoryMock
         );
 
-        $action->execute('wos-123', 'mech-123');
+        $result = $action->execute('wos-123', ['mech-123']);
+
+        $this->assertCount(0, $result);
     }
 
     protected function tearDown(): void

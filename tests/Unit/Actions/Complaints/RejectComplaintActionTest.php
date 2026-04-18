@@ -52,6 +52,12 @@ class RejectComplaintActionTest extends TestCase
             ->andReturn($complaint);
 
         $this->complaintRepositoryMock
+            ->shouldReceive('findActiveByWorkOrderId')
+            ->once()
+            ->with($complaint->work_order_id)
+            ->andReturn(null);
+
+        $this->complaintRepositoryMock
             ->shouldReceive('updateStatus')
             ->once()
             ->with($complaint, ComplaintStatus::REJECTED->value)
@@ -101,6 +107,12 @@ class RejectComplaintActionTest extends TestCase
             ->once()
             ->with($complaint->id)
             ->andReturn($complaint);
+
+        $this->complaintRepositoryMock
+            ->shouldReceive('findActiveByWorkOrderId')
+            ->once()
+            ->with($complaint->work_order_id)
+            ->andReturn(null);
 
         $this->complaintRepositoryMock
             ->shouldReceive('updateStatus')
