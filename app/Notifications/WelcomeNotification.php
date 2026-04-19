@@ -35,12 +35,14 @@ class WelcomeNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Welcome to the ' . config('app.name', 'Laravel') . "!")
+            ->subject('Welcome to ' . config('app.name', 'Car Workshop') . '!')
             ->greeting('Hello, ' . $notifiable->name . '!')
-            ->line('We are so excited to have you join our community.')
-            ->line('Get ready to discover the best toys, exclusive discounts, and early access to our new arrivals.')
-            ->action('Start Shopping', url('/'))
-            ->line('If you have any questions, our support team is always here to help.');
+            ->line('Thank you for joining our car workshop.')
+            ->line('We are ready to assist you with a wide range of services including regular maintenance, engine repair, vehicle inspection, and more.')
+            ->line('Enjoy exclusive offers and priority booking as one of our valued members.')
+            ->action('Book a Service Now', config('app.frontend_url', 'http://localhost:3000'))
+            ->line('If you have any questions, our support team is always here to help.')
+            ->line('Thank you for trusting us with your vehicle.');
     }
 
     /**
