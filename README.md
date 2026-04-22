@@ -8,7 +8,6 @@ A modern, full-stack workshop management system built with Laravel, featuring wo
 [![Redis](https://img.shields.io/badge/Redis-7.2-DC382D?style=for-the-badge&logo=redis)](https://redis.io)
 [![Docker](https://img.shields.io/badge/Docker-24.0-2496ED?style=for-the-badge&logo=docker)](https://docker.com)
 [![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman)](https://documenter.getpostman.com/view/54024615/2sBXqCR4kU)
-[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 ## About
 
