@@ -7,6 +7,8 @@ use App\Models\Car;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class CustomerCarSeeder extends Seeder
 {
@@ -15,8 +17,13 @@ class CustomerCarSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create 5 mechanics
-        $mechanics = [];
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $mechanicRole = Role::findByName(RoleType::MECHANIC->value, 'api');
+        $customerRole = Role::findByName(RoleType::CUSTOMER->value, 'api');
+
+        // --- SEEDING MECHANICS ---
+        $this->command->info("Seeding Mechanics...");
         for ($i = 1; $i <= 5; $i++) {
             $mechanic = User::create([
                 'name' => "Mechanic {$i}",
@@ -26,14 +33,15 @@ class CustomerCarSeeder extends Seeder
                 'is_active' => true,
             ]);
 
-            $mechanic->assignRole(RoleType::MECHANIC->value);
-            $mechanics[] = $mechanic;
+            if ($mechanicRole) {
+                $mechanic->syncRoles([$mechanicRole]);
+            }
 
             $this->command->info("Created mechanic: {$mechanic->email}");
         }
 
-        // Create 10 customers, each with 1-3 cars
-        $customers = [];
+        // --- SEEDING CUSTOMERS & CARS ---
+        $this->command->info("Seeding Customers and Cars...");
         $totalCars = 0;
 
         for ($i = 1; $i <= 10; $i++) {
@@ -45,8 +53,9 @@ class CustomerCarSeeder extends Seeder
                 'is_active' => true,
             ]);
 
-            $customer->assignRole(RoleType::CUSTOMER->value);
-            $customers[] = $customer;
+            if ($customerRole) {
+                $customer->syncRoles([$customerRole]);
+            }
 
             // Create 1-3 cars for each customer
             $numCars = rand(1, 3);

@@ -18,7 +18,7 @@ class CarFactory extends Factory
      */
     public function definition(): array
     {
-        $owner = User::factory()->create();
+        // $owner = User::factory()->create();
 
         $brands = [
             'Toyota',
@@ -80,7 +80,7 @@ class CarFactory extends Factory
         $brand = $this->faker->randomElement($brands);
 
         return [
-            'owner_id' => $owner->id,
+            'owner_id' => User::factory(),
             'plate_number' => strtoupper($this->faker->bothify('?? #### ??')),
             'brand' => $brand,
             'model' => $this->faker->randomElement($models),
