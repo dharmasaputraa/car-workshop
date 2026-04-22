@@ -59,11 +59,11 @@ Read more:
 
 | Layer         | Technology             |
 | ------------- | ---------------------- |
-| Backend       | Laravel 11             |
-| Language      | PHP 8.3                |
+| Backend       | Laravel 13             |
+| Language      | PHP 8.4                |
 | Database      | PostgreSQL 16          |
 | Cache / Queue | Redis 7.2              |
-| Auth          | JWT                    |
+| Auth          | JWT (tymon/jwt-auth)   |
 | Testing       | PHPUnit                |
 | Code Style    | Pint, ESLint, Prettier |
 | Container     | Docker                 |
@@ -83,9 +83,9 @@ See full guide: [docs/setup.md](docs/setup.md)
 
 ### Prerequisites
 
-- PHP 8.3+
+- PHP 8.4+
 - Composer 2.x
-- Node.js 20+
+- Node.js 24+
 - Docker with Docker Compose
 
 ---
