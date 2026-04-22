@@ -473,7 +473,7 @@ erDiagram
 
     mechanic_assignments {
         uuid id PK
-        uuid work_order_service_id FK (nullable)
+        uuid work_order_service_id FK nullable
         uuid complaint_service_id FK
         uuid mechanic_id FK
         string status "assigned | in_progress | completed | canceled"
@@ -510,7 +510,7 @@ erDiagram
         uuid id PK
         string invoice_number
         uuid work_order_id FK
-        uuid complaint_id FK (nullable)
+        uuid complaint_id FK nullable
         decimal subtotal
         decimal discount
         decimal tax
