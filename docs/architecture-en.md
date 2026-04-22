@@ -312,7 +312,7 @@ app/
 │
 ├── Enums/                            ← Type-safe status enums
 │   ├── ComplaintStatus.php           → pending, in_progress, resolved, rejected
-│   ├── InvoiceStatus.php             → draft, sent, paid, canceled
+│   ├── InvoiceStatus.php             → draft, unpaid, paid, canceled
 │   ├── MechanicAssignmentStatus.php  → assigned, in_progress, completed, canceled
 │   ├── RoleType.php                  → super_admin, admin, mechanic, customer
 │   ├── ServiceItemStatus.php         → pending, assigned, in_progress, completed, complained, canceled
@@ -573,7 +573,7 @@ erDiagram
         decimal discount
         decimal tax
         decimal total
-        string status "draft | sent | paid | canceled"
+        string status "draft | unpaid | paid | canceled"
         date due_date
         string payment_method
         string payment_reference
@@ -655,6 +655,7 @@ stateDiagram-v2
     end note
 
     diagnosed --> approved : ApproveWorkOrderProposalAction
+    diagnosed --> diagnosed : DiagnoseWorkOrderAction (rediagnosis)
     diagnosed --> canceled : CancelWorkOrderAction
     note right of diagnosed
         EMAIL: notify owner
@@ -663,8 +664,10 @@ stateDiagram-v2
 
     approved --> pending : (manual transition, waiting for parts/mechanic)
     approved --> in_progress : AssignMechanicToServiceAction
+    approved --> canceled : CancelWorkOrderAction
 
     pending --> in_progress : (parts arrived / mechanic available)
+    pending --> canceled : CancelWorkOrderAction
 
     in_progress --> completed : CompleteWorkOrderAction
     note right of in_progress
@@ -715,20 +718,26 @@ stateDiagram-v2
     [*] --> pending : service added to work order
 
     pending --> assigned : AssignMechanicToServiceAction
+    pending --> canceled : CancelMechanicAssignmentAction
     note right of pending
         Admin assigns mechanic
         to this service item
     end note
 
     assigned --> in_progress : StartWorkOrderServiceAction
+    assigned --> canceled : CancelMechanicAssignmentAction
     note right of assigned
         EMAIL: notify mechanic
         there's a new assignment
     end note
 
     in_progress --> completed : CompleteWorkOrderServiceAction
+    in_progress --> canceled : CancelMechanicAssignmentAction
 
-    completed --> [*]
+    completed --> complained : RecordWorkOrderComplaintAction
+
+    complained --> [*]
+    canceled --> [*]
 ```
 
 ---
@@ -793,15 +802,15 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> draft : GenerateInvoiceAction
 
-    draft --> sent : SendInvoiceAction
+    draft --> unpaid : SendInvoiceAction
     note right of draft
         Calculation from all
         work_order_services
         + complaint_services
     end note
 
-    sent --> paid : PayInvoiceAction
-    sent --> canceled : CancelInvoiceAction
+    unpaid --> paid : PayInvoiceAction
+    unpaid --> canceled : CancelInvoiceAction
 
     draft --> canceled : CancelInvoiceAction
 
@@ -811,12 +820,12 @@ stateDiagram-v2
 
 **Invoice Status (4 states):**
 
-| Status     | Description              | Transition From       | Transition To  |
-| ---------- | ------------------------ | --------------------- | -------------- |
-| `draft`    | New invoice, not sent    | GenerateInvoiceAction | sent, canceled |
-| `sent`     | Invoice sent to customer | SendInvoiceAction     | paid, canceled |
-| `paid`     | Invoice has been paid    | PayInvoiceAction      | [*] (final)    |
-| `canceled` | Invoice canceled         | CancelInvoiceAction   | [*] (final)    |
+| Status     | Description              | Transition From       | Transition To    |
+| ---------- | ------------------------ | --------------------- | ---------------- |
+| `draft`    | New invoice, not sent    | GenerateInvoiceAction | unpaid, canceled |
+| `unpaid`   | Invoice sent to customer | SendInvoiceAction     | paid, canceled   |
+| `paid`     | Invoice has been paid    | PayInvoiceAction      | [*] (final)      |
+| `canceled` | Invoice canceled         | CancelInvoiceAction   | [*] (final)      |
 
 ---
 
@@ -856,10 +865,10 @@ stateDiagram-v2
 
     state "Invoice" as INV {
         [*] --> inv_draft
-        inv_draft --> inv_sent
+        inv_draft --> inv_unpaid
         inv_draft --> inv_canceled
-        inv_sent --> inv_paid
-        inv_sent --> inv_canceled
+        inv_unpaid --> inv_paid
+        inv_unpaid --> inv_canceled
         inv_paid --> [*]
         inv_canceled --> [*]
     }
