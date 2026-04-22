@@ -413,7 +413,7 @@ app/
 ```mermaid
 erDiagram
     users {
-        bigint id PK
+        uuid id PK
         string name
         string email
         string password
@@ -427,8 +427,8 @@ erDiagram
     }
 
     cars {
-        bigint id PK
-        bigint owner_id FK
+        uuid id PK
+        uuid owner_id FK
         string plate_number
         string brand
         string model
@@ -436,61 +436,47 @@ erDiagram
         string color
         timestamp created_at
         timestamp updated_at
-        timestamp deleted_at
     }
 
     work_orders {
-        bigint id PK
+        uuid id PK
         string order_number
-        bigint car_id FK
-        bigint created_by FK
+        uuid car_id FK
+        uuid created_by FK
         string status "draft | diagnosed | approved | pending | in_progress | completed | invoiced | complained | closed | canceled"
         text diagnosis_notes
-        text completion_notes
         date estimated_completion
-        timestamp diagnosed_at
-        timestamp approved_at
-        timestamp completed_at
-        timestamp invoiced_at
-        timestamp complained_at
-        timestamp closed_at
-        timestamp canceled_at
         timestamp created_at
         timestamp updated_at
-        timestamp deleted_at
     }
 
     services {
-        bigint id PK
+        uuid id PK
         string name
         text description
         decimal base_price
         boolean is_active
         timestamp created_at
         timestamp updated_at
-        timestamp deleted_at
     }
 
     work_order_services {
-        bigint id PK
-        bigint work_order_id FK
-        bigint service_id FK
+        uuid id PK
+        uuid work_order_id FK
+        uuid service_id FK
         decimal price
         string status "pending | assigned | in_progress | completed | complained | canceled"
         text notes
-        timestamp started_at
-        timestamp completed_at
         timestamp created_at
         timestamp updated_at
     }
 
     mechanic_assignments {
-        bigint id PK
-        bigint work_order_service_id FK
-        bigint complaint_service_id FK
-        bigint mechanic_id FK
+        uuid id PK
+        uuid work_order_service_id FK (nullable)
+        uuid complaint_service_id FK
+        uuid mechanic_id FK
         string status "assigned | in_progress | completed | canceled"
-        text notes
         timestamp assigned_at
         timestamp completed_at
         timestamp created_at
@@ -498,30 +484,33 @@ erDiagram
     }
 
     complaints {
-        bigint id PK
-        bigint work_order_id FK
+        uuid id PK
+        uuid work_order_id FK
         text description
         string status "pending | in_progress | resolved | rejected"
+        timestamp in_progress_at
         timestamp resolved_at
+        timestamp rejected_at
         timestamp created_at
         timestamp updated_at
     }
 
     complaint_services {
-        bigint id PK
-        bigint complaint_id FK
-        bigint service_id FK
+        uuid id PK
+        uuid complaint_id FK
+        uuid service_id FK
         decimal price
         string status "pending | assigned | in_progress | completed | complained | canceled"
-        text notes
+        text description
         timestamp created_at
         timestamp updated_at
     }
 
     invoices {
-        bigint id PK
+        uuid id PK
         string invoice_number
-        bigint work_order_id FK
+        uuid work_order_id FK
+        uuid complaint_id FK (nullable)
         decimal subtotal
         decimal discount
         decimal tax
@@ -542,7 +531,6 @@ erDiagram
     users ||--o{ cars : "owns"
     users ||--o{ work_orders : "creates"
     users ||--o{ mechanic_assignments : "performs as mechanic"
-    users ||--o{ invoices : "pays"
 
     cars ||--o{ work_orders : "has"
 
@@ -557,6 +545,7 @@ erDiagram
     complaint_services ||--o{ mechanic_assignments : "assigned to"
 
     complaints ||--o{ complaint_services : "requires"
+    complaints ||--o| invoices : "untuk complaint"
 ```
 
 Diagram lengkap:  
